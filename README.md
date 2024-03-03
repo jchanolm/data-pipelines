@@ -34,8 +34,9 @@ I exported clean+organized data covering grantees, grants, and grant funders as 
 
 ### Next steps
 1. Publish dashboard to make the graph more accessible
-1. Build pipelines to programatically expand and enrich the graph
+2. Build pipelines to programatically expand and enrich the graph
 - Grabbing forum post + proposal text will provide grantee affiliates (i.e. members of teams that received grants, contributors to grantee repos) as well as faciliating RAG retrieval (by connecting those documents to entities and the graph and setting embeddings on those documents.
+- I've added helpers for creating scalable pipelines but will implement pipelines as jupyter notebooks first
 2. Strategically ingest data to improve usefulness specifically for Sybil/Airdrop use case
   - Contributors to liquidity pools funded by grant
   - Wallets that have voted on multiple Tally/Snapshot grants proposals
