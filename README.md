@@ -33,6 +33,7 @@ I cleaned and organized the data before restructuring it to ingest into Neo4J, a
 I exported clean+organized data covering grantees, grants, and grant funders as `.csvs` `notebooks/initial-ingest/outputs`, where it can be downloaded for personal use or ingested into other datasets.
 
 ### Next steps
+1. Publish dashboard to make the graph more accessible
 1. Build pipelines to programatically expand and enrich the graph
 - Grabbing forum post + proposal text will provide grantee affiliates (i.e. members of teams that received grants, contributors to grantee repos) as well as faciliating RAG retrieval (by connecting those documents to entities and the graph and setting embeddings on those documents.
 2. Strategically ingest data to improve usefulness specifically for Sybil/Airdrop use case
