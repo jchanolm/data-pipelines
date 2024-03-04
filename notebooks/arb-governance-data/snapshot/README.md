@@ -6,6 +6,11 @@ and voters.
 - 20 proprosal authors
 - 150,000 voters 
 
+The Snapshot data is connected to the our  grantee data through Snapshot Proprosals.
+
+![Screenshot 2024-03-03 at 10 30 51 PM](https://github.com/jchanolm/arbitrum-data/assets/160365885/db00e4bd-8cff-40e2-98e2-41ba9838f6c4)
+
+*(Here you can see how the wallet Saavy, a STIP grant recipient, received funds from was used to vote on several other STIP grants)*
 
 Connecting Snapshot data to the graph enhances its value for generating Sybil/Airdrop relevant datasets.
 
