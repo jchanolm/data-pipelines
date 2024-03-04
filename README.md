@@ -43,6 +43,11 @@ Next I built a pipeline that scrapes all Snapshot voters and proprosals.
 I also linked Grantees to the Snapshot proprosals which approved their funding, which enables queries like
 `give me every wallet that voted to approve funding for multiple (passing) STIP grant proprosals`
 
+## Step 3 - Discourse pipeline
+
+I built a pipeline to scrape all posts from the Arbitrum Foundation Discourse.
+
+View code and data in `notebooks/arb-governance-data/discourse/`
 
 
 ## Todos 
