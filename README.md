@@ -2,10 +2,11 @@
 
 ## Tl;dr 
 
-My objective was to build a knowledge graph covering the Arbitrum ecosystem, including grantees, grantee identifiers (i.e. Funding Wallet, Github), and grant metadata (i.e. amount, grantee submission document, related votes.)
+This repo contains scripts and data for building a knowedge graph of the entire Arbitrum ecosystem,
+which connects on and off-chain data about grantees, grants, voters, proposals, etc. 
 
 I'm passionate about making web3 data more accessible and actionable and will continue to expand
-and enhance this database to make it more useful for downstream analytics use cases, i.e. generating Sybil/Airdrop datasets.
+and enhance this database to make it more useful for the Arbitrum ecosystem.
 
 
 ## Structure
@@ -43,14 +44,16 @@ I also linked Grantees to the Snapshot proprosals which approved their funding, 
 `give me every wallet that voted to approve funding for multiple (passing) STIP grant proprosals`
 
 
-### Next steps
 
-1. Publish dashboard to make the graph more accessible
-   
-2. Build pipelines to programatically expand and enrich the graph
+## Todos 
+
+**1. Publish dashboard to make the graph more accessible**
+
+**2. Build pipelines to programatically expand and enrich the graph**
 - Ingest all Arbitrum Foundation forum/Discourse posts
 - Ingest all Tally proprosals/votes
 - Ingest all contributors to grantee Githubs
+- Ingest all Arbitrum delegation data
 - Ingest Gitcoin grants funded by wallets that have voted on grant-related Arbitrum Snapshot proprosals
 - Extract entities/links/etc from documents to identify grantee affiliates
 
