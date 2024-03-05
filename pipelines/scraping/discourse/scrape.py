@@ -108,7 +108,7 @@ class DiscourseScraper(Scraper):
                 responses.append(response_copy)
         return responses
     
-    def get_last_post_number(self, posts_data):
+    def get_last_post_number(posts_data):
         last_post_number = max([post.get('post_number', 0) for post in posts_data])
         return last_post_number
 
