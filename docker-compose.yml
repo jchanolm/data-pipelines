@@ -1,0 +1,10 @@
+version: '3.4'
+
+services:
+  data-pipelines:
+    image: data-pipelines
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: ./Dockerfile
