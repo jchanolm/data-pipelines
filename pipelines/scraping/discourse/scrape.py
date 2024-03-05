@@ -4,13 +4,11 @@ import time
 import os 
 import requests as requests
 
-from dotenv import load_dotenv
-load_dotenv()
 
 
 class DiscourseScraper(Scraper):
     def __init__(self):
-        super().__init__()  # This calls the __init__ method of the Scraper class
+        super().__init__(module_name='discourse')  # This calls the __init__ method of the Scraper class
         self.base_url = "https://forum.arbitrum.foundation"
 
 
@@ -43,25 +41,26 @@ class DiscourseScraper(Scraper):
             page += 1
         return topics 
     
-    def fetch_topic_details(self, topic_id):
+    def fetch_topic_posts(self, topic_id):
         url = f"{self.base_url}/t/{topic_id}.json"
         response = requests.get(url)
+        time.sleep(.1) ## semi-respectful pause between requests
         if response.status_code != 200:
             return None 
         return response.json()
 
-    def organize_post_data(self, topic_details, category_name):
+    def organize_post_data(self, topic_posts, category_name):
             posts_data = []
-            posts = topic_details.get("post_stream", {}).get("posts", [])
+            posts = topic_posts.get("post_stream", {}).get("posts", [])
             for post in posts:
                 post_data = {
                     "text": post.get("cooked", ""),
-                    "title": topic_details.get("title", ""),
+                    "title": topic_posts.get("title", ""),
                     "author": post.get("username", ""),
-                    "tags": topic_details.get("tags", []),
+                    "tags": topic_posts.get("tags", []),
                     "category": category_name,  # Include category name
-                    "topic_id": topic_details.get("id"),  # Include topic ID
-                    "url": f"{self.base_url}/t/{topic_details.get('id')}/{post.get('post_number')}"
+                    "topic_id": topic_posts.get("id"),  # Include topic ID
+                    "url": f"{self.base_url}/t/{topic_posts.get('id')}/{post.get('post_number')}"
                 }
                 # Find responses to this post
                 responses = [response for response in posts if response.get("reply_to_post_number") == post.get("post_number")]
@@ -72,7 +71,7 @@ class DiscourseScraper(Scraper):
                 posts_data.append(post_data)
             return posts_data
 
-    def ingest_data(self):
+    def fetch_posts(self):
         print("Fetching categories....")
         categories = self.fetch_categories()
         all_posts_data = []
@@ -83,10 +82,11 @@ class DiscourseScraper(Scraper):
             topics = self.fetch_topics(category_slug)
             for topic in topics:
                 topic_id = topic.get('id')
-                topic_details = self.fetch_topic_details(topic_id)
+                topic_details = self.fetch_topic_posts(topic_id)
                 if topic_details:
                     posts_data = self.organize_post_data(topic_details, category_name)
                     all_posts_data.extend(posts_data)
+                    print(f"Scraped {len(all_posts_data)} records....")
         return all_posts_data
     
     def extract_posts(self, posts_data):
@@ -97,7 +97,7 @@ class DiscourseScraper(Scraper):
                 posts_without_responses.append(post_copy)
                 return posts_without_responses
 
-    def extract_post_responses(posts_data):
+    def extract_post_responses(self, posts_data):
         responses = []
         for post in posts_data:
             for response in post.get('responses', []):
@@ -108,20 +108,20 @@ class DiscourseScraper(Scraper):
                 responses.append(response_copy)
         return responses
     
-    def get_last_post_number(posts_data):
+    def get_last_post_number(self, posts_data):
         last_post_number = max([post.get('post_number', 0) for post in posts_data])
         return last_post_number
 
 
     def run(self):
         print(f"Fetching all posts from {self.base_url}...")
-        posts = self.ingest_data()
+        posts = self.fetch_posts()
         self.data['posts'] = self.extract_posts(posts)
         self.data['responses'] = self.extract_post_responses(posts)
         self.metadata['last_post_number'] = self.get_last_post_number(posts)
 
         self.save_data_local()
-        self.save_metadata()
+        self.save_metadata_local()
 
 
 if __name__ == "__main__":
