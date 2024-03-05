@@ -8,3 +8,4 @@ testing/
 notebooks
 .python-version
 .gitkeep
+env/
