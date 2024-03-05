@@ -15,8 +15,8 @@ The code is organized into two three modules:
 ## Design strategy
 ---- 
 The repository structure allows you to call commands using a Python module approach. 
-For example, to scrape the Arbitrum DAO Discourse forum, use python3 -m pipelines.scraping.discourse.scrape.
-
+For example, run `python3 -m pipelines.scraping.discourse.scrape` 
+to scrape posts and post authors from Arbitrum DAO's Discourse forum.
 
 ## Install
 ---- 
@@ -28,10 +28,14 @@ After that, install requirements w/ `pip3 install -r requirements.txt`
 -----
 Package the module into a Docker image for cloud deployment or local use. 
 To build the image, run docker build . -t arbitrum-pipelines. 
-Then, execute the modules directly through the Docker image by replacing "module", "service", and "action" with the desired pipeline module. 
-Use the command docker run --env-file .env arbitrum-pipeline python3 -m pipelines.[module].[service].[action]. 
-Remember to have a .env file containing all the necessary environment variables. 
-Additionally, a Docker Compose file is provided for added convenience.
+Then, execute the modules directly through the Docker image 
+by replacing "module", "service", and "action" with the desired pipeline module. 
+
+I.e.  `docker run --env-file .env arbitrum-pipeline python3 -m pipelines.[module].[service].[action]`
+
+Remember to have a `.env file` containing all the necessary environment variables. 
+For your convenience, the repo also contains a `Docker Compose` file. 
+
 
 
 # Modules
@@ -39,7 +43,9 @@ Additionally, a Docker Compose file is provided for added convenience.
 ## Scraping
 -----
 The scraping module can be imported or run as a package using python -m.
-It includes internal packages, each dedicated to a specific service and containing a scrape.py file to execute the scraping process for that service. 
+It includes internal packages, each dedicated to a specific service 
+and containing a scrape.py file to execute the scraping process for that service. 
+
 Each service is initiated by running its `scrape.py` file.
 
 ```
@@ -75,10 +81,6 @@ scraping_module/
 - Each scraper must save its data in its  `data/` subdirectory as a `.json`
 - Each service must read and save its necessary metadata, such as last item scraped, in `data/scraper_metadata.json`
 
-
-
-
-Importing or Running as a Package: The scraping module can be imported into other Python scripts or run directly as a package using the python -m command.
 
 
 
