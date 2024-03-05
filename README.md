@@ -11,6 +11,8 @@ The code is organized into two three modules:
 - `ingestion` scripts to ingest data into a Neo4J, a graph database
 - `post-processing` scripts to enrich data in Neo4J with additional attributes
 
+<img width="932" alt="Screenshot 2024-03-03 at 12 37 55 PM" src="https://github.com/jchanolm/arbitrum-data/assets/160365885/c90054de-498b-4094-aaa3-7cdd4333d8c2">
+
 
 ## Design strategy
 ---- 
@@ -96,29 +98,7 @@ Refer to the `dotenv.txt` file for required ENV variables.
 
 
 
-## Structure
 
-All code / data is in `notebooks/`.
-
-Each source has its own directory, i.e. `snapshot/`, `discourse/`
-
-Each directory contains a Jupyter notebook (scraping/ingestion code) as well as `.csv` files with the scraped/ingested data.
-
-Each directory also contains a README.md with additional context, i.e. stats, ontology, etc.
-
-
-## Process
-
-### Step 1 - Manual Data Collection
-
-I started with manual data collection to become familiar with the grants data landscape.
-I started with primary sources and made sure to collect supporting documents and other metadata for each grantee.
-The raw data is available in `notebooks/initial-ingest/inputs/`
-
-After that, I ingested the data into Neo4J, a popular graph database solution.
-You can spin up your own (free) cloud Neo4J instance through Neo4J aura: https://neo4j.com/cloud/aura-free/
-
-<img width="932" alt="Screenshot 2024-03-03 at 12 37 55 PM" src="https://github.com/jchanolm/arbitrum-data/assets/160365885/c90054de-498b-4094-aaa3-7cdd4333d8c2">
 
 
 ### Step 2 - Snapshot Data Pipeline
