@@ -23,7 +23,7 @@ class Scraper():
     def save_data_local(self):
         os.makedirs(os.path.dirname(self.data_filename), exist_ok=True)
         with open(self.data_filename, "w") as f:
-            json.dump(self.data, f)
+            json.dump(self.data, f, indent=4)
 
     def save_metadata_local(self):
         os.makedirs(os.path.dirname(self.metadata_filename), exist_ok=True)
