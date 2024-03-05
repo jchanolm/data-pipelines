@@ -1,12 +1,97 @@
-# arbitrum-data
+# Arbitrum Data Ingestion Framework
 
 ## Tl;dr 
 
-This repo contains scripts and data for building a knowedge graph of the entire Arbitrum ecosystem,
-which connects on and off-chain data about grantees, grants, voters, proposals, etc. 
+This repo contains scripts for scraping on and off-chain data relevant for understanding the Arbitrum ecosystem.
 
-I'm passionate about making web3 data more accessible and actionable and will continue to expand
-and enhance this database to make it more useful for the Arbitrum ecosystem.
+Some examples: grant awardees and Github profiles, DAO proposals and voters, forum posts and posters...
+
+The code is organized into two three modules:
+- `scraping`: scripts to scrape data
+- `ingestion` scripts to ingest data into a Neo4J, a graph database
+- `post-processing` scripts to enrich data in Neo4J with additional attributes
+
+
+## Design strategy
+---- 
+The repository structure allows you to call commands using a Python module approach. 
+For example, to scrape the Arbitrum DAO Discourse forum, use python3 -m pipelines.scraping.discourse.scrape.
+
+
+## Install
+---- 
+Create a virtual environment using **Python 3.10. 
+After that, install requirements w/ `pip3 install -r requirements.txt`
+
+
+## Docker Image
+-----
+Package the module into a Docker image for cloud deployment or local use. 
+To build the image, run docker build . -t arbitrum-pipelines. 
+Then, execute the modules directly through the Docker image by replacing "module", "service", and "action" with the desired pipeline module. 
+Use the command docker run --env-file .env arbitrum-pipeline python3 -m pipelines.[module].[service].[action]. 
+Remember to have a .env file containing all the necessary environment variables. 
+Additionally, a Docker Compose file is provided for added convenience.
+
+
+# Modules
+
+## Scraping
+-----
+The scraping module can be imported or run as a package using python -m.
+It includes internal packages, each dedicated to a specific service and containing a scrape.py file to execute the scraping process for that service. 
+Each service is initiated by running its `scrape.py` file.
+
+```
+scraping_module/
+│
+├── __init__.py
+├── discourse/
+│   ├── __init__.py
+│   └── scrape.py
+├── snapshot/
+│   ├── __init__.py
+│   └── scrape.py
+└── ...
+```
+
+## Planned scrapers
+---- 
+- `discourse` [x]
+- `snapshot` *in progress*
+- `github` []
+- `multisigs` []
+- `gitcoin-grants-donors` []
+- `dune-contributors` []
+...
+## Design strategy
+------ 
+- Each scraper inherits from `Scraper` class defined in `helpers/scraper.py`
+- Each scraper must live in its own folder
+- Each service must have a README.me file that defines the scraper's usage arguments
+- Each service must explain how the scraper works and what data the scraper collects in its README.md file
+- Each service must have an `__init__.py` file exporting the scraper and all other defined classes for use in the module
+- Each scraper  a `scrape.py` file as its main executable
+- Each scraper must save its data in its  `data/` subdirectory as a `.json`
+- Each service must read and save its necessary metadata, such as last item scraped, in `data/scraper_metadata.json`
+
+
+
+
+Importing or Running as a Package: The scraping module can be imported into other Python scripts or run directly as a package using the python -m command.
+
+
+
+
+
+
+## TODO 
+
+<!-- ## ENV Variables
+----
+Refer to the `dotenv.txt` file for required ENV variables.
+ -->
+
 
 
 ## Structure
