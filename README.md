@@ -25,7 +25,7 @@ to scrape posts and post authors from Arbitrum DAO's Discourse forum.
 
 Data for each source (i.e. discourse, snapshot) is located in the `/data` subdirectory of each data source's scraper.
 
-I.e. scraped Snapshot data lives in `pipelines/scraping/discourse/data/`
+I.e. scraped Discourse data lives in `pipelines/scraping/discourse/data/`
 
 
 ## Install
