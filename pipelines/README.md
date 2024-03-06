@@ -7,7 +7,8 @@ It runs GraphQL queries against the Snapshot API, parses and refines the returne
 
 The script returns **Proposals** and **Votes** as keys in `data.json`.
 
-## !Important Datafile to large to upload to S3, access on IPFS here: ipfs://bafybeihu23kfmowefwj2ztolc42ajyx7gqd7i5wfvwnypvqhmel5hwrorm/!
+### !Important! 
+Datafile to large to upload to S3, access on IPFS here: ipfs://bafybeihu23kfmowefwj2ztolc42ajyx7gqd7i5wfvwnypvqhmel5hwrorm/!
 
 ## Proposals: 
 
