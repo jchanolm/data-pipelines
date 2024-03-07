@@ -47,7 +47,7 @@ class DiscourseScraper(Scraper):
     def fetch_topic_posts(self, topic_id):
         url = f"{self.base_url}/t/{topic_id}.json"
         response = requests.get(url)
-        time.sleep(.05) ## semi-respectful pause between requests
+        time.sleep(.1) ## semi-respectful pause between requests
         if response.status_code != 200:
             return None 
         return response.json()

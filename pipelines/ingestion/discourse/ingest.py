@@ -16,10 +16,13 @@ class DiscourseIngestor(Ingestor):
         posts_df = pd.DataFrame(self.scraper_data['posts'])
         urls = self.save_df_as_csv(posts_df, f"ingestor_posts_{self.asOf}")
         self.cyphers.create_posts(urls)
+        
 
 
     def run(self):
         self.process_create_posts()
+
+
 
 if __name__ == '__main__':
     ingestor = DiscourseIngestor()
