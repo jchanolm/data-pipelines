@@ -3,6 +3,9 @@
 ## Overview
 This script, `DiscourseScraper`, automates the extraction of posts and their responses from the Arbitrum Discourse forum. Designed for seamless integration and ease of use, it fetches categories, topics, and individual posts, organizing the data into a structured format.
 
+## Data
+- Viewfile: https://arb-grants-data-arbitrum-discourse.s3.us-east-2.amazonaws.com/data_2024-3-7_.json
+
 ## Features
 - **Category Fetching:** Retrieves all forum categories.
 - **Topic Fetching:** Collects topics under each category.
