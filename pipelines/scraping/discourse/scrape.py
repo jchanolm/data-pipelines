@@ -82,7 +82,7 @@ class DiscourseScraper(Scraper):
                     "readsCount": post.get("reads"),
                     "replyToPostNumber": post.get("reply_to_post_number"),
                     "title": topic_posts.get("title", ""),
-                    "author": post.get("username", ""),
+                    "author": post.get("display_username", ""),
                     "tags": topic_posts.get("tags", []),
                     "category": category_name,  
                     "topicId": topic_posts.get("topic_id"),  

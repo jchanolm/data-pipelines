@@ -23,25 +23,30 @@ if __name__ == "__main__":
     scraper.run()
 ```
 
-### Post
+### Post Object
 
 ```
-{
-  "text": "Example post content.",
-  "title": "Example Post Title",
-  "author": "username",
-  "tags": ["tag1", "tag2"],
-  "category": "Example Category",
-  "topic_id": 123,
-  "url": "https://forum.arbitrum.foundation/t/123/1"
-}```
-
-### Response
-
+post = {
+    'postUuid': topicId + postId + postNumber, 
+    'postId': int, 
+    'title': str, 
+    "text": str, 
+    "authorId": int,
+    "author": str, 
+    "trustLevel": str,
+    postNumber: str, 
+    "incomingLinkCount: int, 
+    "quoteCount"; int, 
+    "likes": int, 
+    "readersCount": int, 
+    "quoteCount: int, 
+    "readsCount": int, 
+    "replyToPostNumber": str[],
+    "author": str, 
+    "tags": str[],
+    "category": str,
+    "topicId": int, 
+    "url": str
+}
 ```
-{
-  "text": "Example response content.",
-  "author": "username",
-  "parent_post_title": "Example Post Title",
-  "parent_post_id": 123
-}```
+
