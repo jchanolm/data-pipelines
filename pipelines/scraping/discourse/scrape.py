@@ -7,10 +7,9 @@ import requests as requests
 
 
 class DiscourseScraper(Scraper):
-    def __init__(self):
-        super().__init__(module_name='discourse')  # This calls the __init__ method of the Scraper class
+    def __init__(self, bucket_name="arbitrum-discourse", load_data=False):
+        super().__init__(bucket_name=bucket_name, load_data=load_data)
         self.base_url = "https://forum.arbitrum.foundation"
-
 
     def fetch_categories(self):
         base_url = self.base_url
@@ -44,7 +43,7 @@ class DiscourseScraper(Scraper):
     def fetch_topic_posts(self, topic_id):
         url = f"{self.base_url}/t/{topic_id}.json"
         response = requests.get(url)
-        time.sleep(.1) ## semi-respectful pause between requests
+        time.sleep(.2) ## semi-respectful pause between requests
         if response.status_code != 200:
             return None 
         return response.json()
@@ -120,8 +119,8 @@ class DiscourseScraper(Scraper):
         self.data['responses'] = self.extract_post_responses(posts)
         self.metadata['last_post_number'] = self.get_last_post_number(posts)
 
-        self.save_data_local()
-        self.save_metadata_local()
+        self.save_data()
+        self.save_metadata()
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   data-pipelines:
-    image: data-pipelines
+    image: arbitrum-pipelines  # Updated from data-pipelines to arbitrum-pipelines
     env_file:
       - .env
     build:
