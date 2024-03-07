@@ -7,7 +7,7 @@ class Ingestor(Base):
         try:
             self.cyphers
         except:
-            raise NotImplementedError("Cyphers have not been instanciated to self.cyphers")
+            raise NotImplementedError("Cyphers have not been instatiated to self.cyphers")
 
     def run(self):
         "Main function to be called. Every ingestor must implement its own run function!"
