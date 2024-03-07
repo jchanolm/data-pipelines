@@ -37,11 +37,13 @@ After that, install requirements w/ `pip3 install -r requirements.txt`
 ## Docker Image
 -----
 Package the module into a Docker image for cloud deployment or local use. 
-To build the image, run docker build . -t arbitrum-pipelines. 
+To build the image, run 
+`docker build . -t arbitrum-pipelines`
+ 
 Then, execute the modules directly through the Docker image 
 by replacing "module", "service", and "action" with the desired pipeline module. 
 
-I.e.  `docker run --env-file .env arbitrum-pipeline python3 -m pipelines.[module].[service].[action]`
+I.e.  `docker run --env-file .env arbitrum-pipelines python3 -m pipelines.[module].[service].[action]`
 
 Remember to have a `.env file` containing all the necessary environment variables. 
 For your convenience, the repo also contains a `Docker Compose` file. 

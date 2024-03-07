@@ -1,31 +1,22 @@
 import sys
-import json 
 from datetime import datetime
-import time
 import logging
 import os
+from ...helpers import Base
 
-import os
-import json
-from datetime import datetime
+# This class is the base class for all scrapers.
+# Every scraper must inherit this class and define its own run function
+# The base class takes care of loading the metadata and checking that data was not already ingested for today
+# The data and metadata are not saved automatically at the end of the execution to allow for user defined save points.
+# Use the save_metadata and save_data functions to automatically save to S3
+# During the run function, save the data into the instance.data field.
+# The data field is a dictionary, define each root key as you would a mongoDB index.
 
-class Scraper():
+class Scraper(Base):
+    def __init__(self, bucket_name, load_data=False, chain="ethereum"):
+        Base.__init__(self, bucket_name=bucket_name, metadata_filename="scraper_metadata.json", load_data=load_data, chain=chain)
+        self.runtime = datetime.now()
 
-    def __init__(self, module_name, metadata_filename="scraper_metadata.json"):
-        self.runtime = datetime.now().strftime('%Y-%m-%d')
-        self.module_name = module_name # must be defined in subclasses
-        self.data = {}
-        self.metadata = {'runtime': self.runtime}
-        self.data_filename = f"pipelines/scraping/{self.module_name}/data/data_{self.runtime}.json"
-        self.metadata_filename = f"pipelines/scraping/{self.module_name}/data/{metadata_filename}"
-
-
-    def save_data_local(self):
-        os.makedirs(os.path.dirname(self.data_filename), exist_ok=True)
-        with open(self.data_filename, "w") as f:
-            json.dump(self.data, f)
-
-    def save_metadata_local(self):
-        os.makedirs(os.path.dirname(self.metadata_filename), exist_ok=True)
-        with open(self.metadata_filename, 'w') as f:
-            json.dump(self.metadata, f, ensure_ascii=False, indent=4)
+    def run(self):
+        "Main function to be called. Every scrapper must implement its own run function !"
+        raise NotImplementedError("ERROR: the run function has not been implemented!")
