@@ -1,8 +1,5 @@
 # Arbitrum Data Ingestion Framework
 
-## !IMPORTANT for Arb Bounty Reviews - I did a signifigant refactoring to the repo today (3/6) to prepare for the next set of tasks.
-## ! Please refer to the state of the repository in this commit (https://github.com/jchanolm/arbitrum-data/commit/39d77fdfd4db2b8f97fc2fae9db74050e88cc39c) for the code at the time the ## ! original set of tasks closed 
-
 ## Tl;dr 
 
 This repo contains scripts for scraping on and off-chain data relevant for understanding the Arbitrum ecosystem.
@@ -26,9 +23,9 @@ to scrape posts and post authors from Arbitrum DAO's Discourse forum.
 
 ## Data
 
-Data for each source (i.e. discourse, snapshot) is located in the `/data` subdirectory of each data source's scraper.
-
-I.e. scraped Discourse data lives in `pipelines/scraping/discourse/data/`
+Data for each source (i.e. discourse, snapshot) was originally located in the `/data` subdirectory of each data source's scraper. However, the files were too large to store on Git, so I hosted them in the cloud for easy access:
+- Snapshot/Voting: ipfs://bafybeihu23kfmowefwj2ztolc42ajyx7gqd7i5wfvwnypvqhmel5hwrorm/
+- Discourse/Forum: https://arb-grants-data-arbitrum-discourse.s3.us-east-2.amazonaws.com/data_2024-3-7_.json
 
 
 ## Install
