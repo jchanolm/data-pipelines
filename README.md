@@ -23,10 +23,18 @@ to scrape posts and post authors from Arbitrum DAO's Discourse forum.
 
 ## Data
 
-Data for each source (i.e. discourse, snapshot) was originally located in the `/data` subdirectory of each data source's scraper. However, the files were too large to store on Git, so I hosted them in the cloud for easy access:
+Scrapers store data in S3 by default (filesizes get quite large when you run multiple times a day for testing.)
+I will add the option to store data locally/on IPFS shortly.
+Links to the full datafiles are included in each scraper's `README.md`.
 - Snapshot/Voting: ipfs://bafybeihu23kfmowefwj2ztolc42ajyx7gqd7i5wfvwnypvqhmel5hwrorm/
 - Discourse/Forum: https://arb-grants-data-arbitrum-discourse.s3.us-east-2.amazonaws.com/data_2024-3-7_.json
 
+Scrapers store data in S3 by default (filesizes get quite large when you run multiple times a day for testing.)
+I will add the option to store data locally/on IPFS shortly.
+Links to the full datafiles are included in each scraper's `README.md`.
+
+Ingestors connect data from different scrapers with a common ontology which enables queries across different data sources.
+For instance, you can query for wallets who voted on proposals (Snapshot) that funded Grants focused on data (Discourse, Gitcoin).
 
 ## Install
 ---- 
