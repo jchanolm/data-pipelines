@@ -134,7 +134,7 @@ def create_authors(self, urls):
     
 
 
-
+## 
     # @count_query_logging
     # def create_categories(self):
 

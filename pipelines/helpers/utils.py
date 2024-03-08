@@ -21,3 +21,6 @@ class Utils:
             return False
         else:
             raise ValueError("String value not covered.")
+        
+    def drop_na(self, df, column=None):
+        return df.drop_na(subset=[f'{column}'], inplace=True)
