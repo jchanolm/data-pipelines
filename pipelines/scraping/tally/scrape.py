@@ -40,7 +40,15 @@ class TallyScraper(Scraper):
                 logging.error(f"Unhandled exception: {e}")
                 return None
 
-    def governor(self):
+    def orgs_members():
+        ## creators too
+        return XXX
+    
+
+    ## get whether prop passed -- interesting to judge voters baser on that, if ou constantly vote for shit fails
+    ## also good for discourse collusion
+    def arb_votes_voters(self):
+        ## get proposal creators
         query = """
         query Proposals($chainId: ChainID!, $governorIds: Address!) {
           proposals(chainId: $chainId, governors: [$governorIds]) {
@@ -64,6 +72,7 @@ class TallyScraper(Scraper):
                 support
                 weight
             }
+            
           }
         }
         """
@@ -73,10 +82,21 @@ class TallyScraper(Scraper):
         with open("results.json", 'w') as f:
             json.dump(results, f, indent=4)
 
+    def delegations():
+
+    def other_votes():
+
+    def scrape_proposals()
+### comments
+    def scrape_home
+    ### safes 
     def run(self):
         self.governor()
         # self.save_data()
         # self.save_metadata()
+
+
+## postProcessor -- safes + signers
 
 
 if __name__ == "__main__":
