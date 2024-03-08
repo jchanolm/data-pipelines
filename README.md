@@ -1,8 +1,5 @@
 # Arbitrum Data Ingestion Framework
 
-## !IMPORTANT for Arb Bounty Reviews - I did a signifigant refactoring to the repo today (3/6) to prepare for the next set of tasks.
-## ! Please refer to the state of the repository in this commit (https://github.com/jchanolm/arbitrum-data/commit/39d77fdfd4db2b8f97fc2fae9db74050e88cc39c) for the code at the time the ## ! original set of tasks closed 
-
 ## Tl;dr 
 
 This repo contains scripts for scraping on and off-chain data relevant for understanding the Arbitrum ecosystem.
@@ -28,7 +25,9 @@ to scrape posts and post authors from Arbitrum DAO's Discourse forum.
 
 Scrapers store data in S3 by default (filesizes get quite large when you run multiple times a day for testing.)
 I will add the option to store data locally/on IPFS shortly.
-Links to the full datafiles are included in each scraper's `README.md`.
+Links to the full datafiles are also included in each scraper's `README.md`.
+- Discourse: ipfs://bafybeihu23kfmowefwj2ztolc42ajyx7gqd7i5wfvwnypvqhmel5hwrorm
+- Snapshot: ipfs://bafybeihu23kfmowefwj2ztolc42ajyx7gqd7i5wfvwnypvqhmel5hwrorm/
 
 
 ## Install
