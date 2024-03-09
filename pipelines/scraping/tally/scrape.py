@@ -5,6 +5,10 @@ import json
 import os 
 import requests as requests
 
+## getting involved arb
+#- fostering active delegate engagement (https://www.tally.xyz/gov/arbitrum/proposal/56002054155248055908873103086558103132748843103210580613728556162036150296506?chart=timeline)
+                                        
+
 
 class TallyScraper(Scraper):
     def __init__(self, bucket_name="arbitrum-tally", load_data=False):
@@ -40,12 +44,14 @@ class TallyScraper(Scraper):
                 logging.error(f"Unhandled exception: {e}")
                 return None
 
-    def orgs_members():
-        ## creators too
-        return XXX
+    # def orgs_members():
+    #     ## creators too
+    #     return XXX
     
 
     ## get whether prop passed -- interesting to judge voters baser on that, if ou constantly vote for shit fails
+    ### or no, etc
+    ### tag snapshot vote status as well
     ## also good for discourse collusion
     def arb_votes_voters(self):
         ## get proposal creators
@@ -82,16 +88,33 @@ class TallyScraper(Scraper):
         with open("results.json", 'w') as f:
             json.dump(results, f, indent=4)
 
-    def delegations():
+    def delegations(self):
+        query = """
+        {
+            organizations {
+            id
+            name
+            }
+        }
+        """
+        variables = {"chainId": "eip155:42161"}
+        results = self.send_api_request(query, variables)
 
-    def other_votes():
+        with open('results_delegations.json', 'w') as f:
+            json.dump(results, f, indent=4)
+    # def other_votes():
 
-    def scrape_proposals()
+    # def scrape_proposals()
 ### comments
-    def scrape_home
-    ### safes 
+### asSOCIATE wallets w/forum authors
+### get links to proposals and snapshots
+
+    # def scrape_home
+    # ### safes 
     def run(self):
-        self.governor()
+        # self.arb_votes_voters()
+        self.delegations()
+
         # self.save_data()
         # self.save_metadata()
 
