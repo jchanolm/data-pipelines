@@ -14,6 +14,9 @@ The code is organized into two three modules:
 - `ingestion` scripts to ingest data into a Neo4J, a graph database
 - `post-processing` scripts to enrich data in Neo4J with additional attributes
 
+## Judges
+- Ignore Snapshot Ingestor + Tally Scraper, they were submitted after deadline.
+
 
 ## Design strategy
 ---- 
