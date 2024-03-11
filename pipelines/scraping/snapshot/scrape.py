@@ -7,10 +7,13 @@ from .helpers.queries import proposals_query
 
 class SnapshotScraper(Scraper):
     def __init__(self):
-        super().__init__(module_name='snapshot')
+        super().__init__(bucket_name='snapshot')
         self.snapshot_api_url = "https://hub.snapshot.org/graphql"
         self.arb_space_id = "arbitrumfoundation.eth"
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        self.last_space_offset = 0
+
+
         self.proposals_query = f"""
         {{
             proposals(
@@ -30,8 +33,57 @@ class SnapshotScraper(Scraper):
             }}
         }}
         """ 
+        self.space_limit = 1000
+
+        self.spaces_query =  """
+
+        {{
+            spaces(
+                first: {0},
+                skip: {1},
+                orderBy: "created",
+                orderDirection: asc
+            ) {{
+            id
+                name
+                about
+                avatar
+                terms
+                location
+                website
+                twitter
+                github
+                network
+                symbol
+                strategies {{
+                name
+                params
+                }}
+                admins
+                members
+                filters {{
+                minScore
+                onlyMembers
+                }}
+                plugins
+            }}
+        }}
+        """
 
 
+
+    def make_api_call(self, query, counter=0, content=None):
+        time.sleep(counter)
+        if counter > 10:
+            logging.error(content)
+            raise Exception("Something went wrong while getting the results from the API")
+        content = self.post_request(self.snapshot_api_url, json={"query": query})
+        if "504: Gateway time-out" in content:
+            return self.make_api_call(query, counter=counter + 1, content=content)
+        data = json.loads(content)
+        if "data" not in data or "error" in data:
+            return self.make_api_call(query, counter=counter + 1, content=content)
+        return data["data"]
 
     def send_api_request(self, query, retry_count=0):
         max_retries = 10
@@ -52,6 +104,7 @@ class SnapshotScraper(Scraper):
             except Exception as e:
                 logging.error(f"Unhandled exception: {e}")
                 return None
+
 
     def fetch_proposals(self):
         logging.info("Fetching proposals...")
@@ -85,6 +138,7 @@ class SnapshotScraper(Scraper):
             }}
         }}
         """
+        
         all_votes = []
         for proposal in proposals:
             proposal_id = proposal["id"]
@@ -129,21 +183,49 @@ class SnapshotScraper(Scraper):
             refined_votes.append(refined_vote)
         return refined_votes
     
+    def get_all_spaces(self):
+        logging.info("Getting spaces...")
+        raw_spaces = []
+        offset = self.last_space_offset
+        results = True
+        while results:
+            self.metadata["last_space_offset"] = offset
+            if len(raw_spaces) % 1000 == 0:
+                logging.info(f"Current Spaces: {len(raw_spaces)}")
+            query = self.spaces_query.format(self.space_limit, offset)
+            data = self.make_api_call(query)
+            results = data.get("spaces")  # Use get to avoid KeyError if "spaces" is missing
+            if results:  # Check if results is not None or empty
+                raw_spaces.extend(results)
+                offset += self.space_limit
+            else:  # Break the loop if results is None or empty
+                break
+        logging.info(f"Total Spaces acquired: {len(raw_spaces)}")
+        ens_list = self.parallel_process(self.get_ens_info, raw_spaces, description="Getting information about ENS holders")
+        for i in range(len(raw_spaces)):
+            if ens_list[i] is not None:
+                raw_spaces[i]["ens"] = ens_list[i]
+
+        final_spaces = [space for space in raw_spaces if space]
+        self.data["spaces"] = raw_spaces
+        logging.info(f"Final spaces count: {len(final_spaces)}")
+
 
     def run(self):
+        # self.data['spaces'] = self.get_all_spaces()
         proposals_response = self.fetch_proposals()
         proposals = proposals_response.get('proposals', [])
         all_votes = self.get_all_votes_for_proposals(proposals)
         refined_votes = self.refine_votes(all_votes)
-        self.data['proposals'] = proposals 
-        self.data['votes'] = refined_votes
-        if proposals:
-            most_recent_proposal = max(proposals, key=lambda x: x['end'])
-            self.metadata['last_proposal_end_dt'] = most_recent_proposal['end']
-            self.metadata['last_proposal_id'] = most_recent_proposal['id']
-            logging.info(f"Total votes fetched and refined: {len(refined_votes)}")
-        self.save_data_local()
-        self.save_metadata_local()
+        # self.data['proposals'] = proposals 
+        # self.data['votes'] = refined_votes
+        # if proposals:
+        #     most_recent_proposal = max(proposals, key=lambda x: x['end'])
+        #     self.metadata['last_proposal_end_dt'] = most_recent_proposal['end']
+        #     self.metadata['last_proposal_id'] = most_recent_proposal['id']
+        #     logging.info(f"Total votes fetched and refined: {len(refined_votes)}")
+        self.save_data()
+        self.save_metadata()
 
 if __name__ == "__main__":
     scraper = SnapshotScraper()
