@@ -29,7 +29,7 @@ Links to the full datafiles are included in each scraper's `README.md`.
 - Snapshot/Voting: ipfs://bafybeihu23kfmowefwj2ztolc42ajyx7gqd7i5wfvwnypvqhmel5hwrorm/
 - Discourse/Forum: https://arb-grants-data-arbitrum-discourse.s3.us-east-2.amazonaws.com/data_2024-3-7_.json
 
-Scrapers store data in S3 by default (filesizes get quite large when you run multiple times a day for testing.)
+Scrapers store data in S3 by default.
 I will add the option to store data locally/on IPFS shortly.
 Links to the full datafiles are included in each scraper's `README.md`.
 
