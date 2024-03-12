@@ -43,7 +43,7 @@ class Queries(Cypher):
         for url in tqdm(urls):
             query = f"""
                     LOAD CSV WITH HEADERS FROM '{url}' AS twitter
-                    MERGE (t:Twitter:Account {{handle: toLower(twitter.handle)}})
+                    MERGE (t:Twitter:Account {{handle: toLower(twitter.twitterHandle)}})
                     ON CREATE set t.uuid = apoc.create.uuid(),
                         t.profileUrl = twitter.profileUrl,
                         t.createdDt = datetime(apoc.date.toISO8601(apoc.date.currentTimestamp(), 'ms')),
@@ -54,6 +54,7 @@ class Queries(Cypher):
                         t.ingestedBy = "{self.UPDATED_ID}"
                     return count(t)    
             """
+            print(query)
             count += self.query(query)[0].value()
         return count
 

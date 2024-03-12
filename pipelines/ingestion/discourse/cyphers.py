@@ -16,6 +16,7 @@ class DiscourseCyphers(Cypher):
         count = 0 
         for url in urls:      
             query = f"""LOAD CSV WITH HEADERS FROM '{url}' AS posts
+                        WITH posts WHERE posts.postUuid IS NOT NULL 
                         MERGE (post:Post:Discourse {{postUuid: posts.postUuid}})
                         ON CREATE SET
                             post:Ingest,
@@ -40,7 +41,6 @@ class DiscourseCyphers(Cypher):
                         ON MATCH SET
                             post:Ingest
                         RETURN COUNT(DISTINCT(post))"""
-            print(query)
             count += self.query(query)[0].value()
         return count 
 

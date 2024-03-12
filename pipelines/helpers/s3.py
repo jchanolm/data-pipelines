@@ -265,7 +265,7 @@ class S3Utils:
     def save_data(self, chunk_prefix: str = "") -> None:
         """
         Saves the current data to S3. 
-        This will take care of chunking the data to less than 5Gb for AWS S3 requierements.
+        This will take care of chunking the data to less than 5Gb for AWS S3 requirements.
         You can specify a chunk_prefix to add to the filename to avoid name collision.
         """
         logging.info("Saving the results to S3 ...")
@@ -275,29 +275,37 @@ class S3Utils:
         
         if data_size > self.S3_max_size:
             n_chunks = math.ceil(data_size / self.S3_max_size)
-            logging.info(f"Data is too big: {data_size}, chuking it to {n_chunks} chunks ...")
+            logging.info(f"Data is too big: {data_size}, chunking it to {n_chunks} chunks ...")
             len_data = {}
             for key in self.data:
                 len_data[key] = math.ceil(len(self.data[key])/n_chunks)
             for i in range(n_chunks):
                 data_chunk = {}
                 for key in self.data:
-                    if type(self.data[key]) == dict:
+                    if isinstance(self.data[key], dict):
                         data_chunk[key] = {}
                         chunk_keys = list(self.data[key].keys())[i*len_data[key]:min((i+1)*len_data[key], len(self.data[key]))]
                         for chunk_key in chunk_keys:
                             data_chunk[key][chunk_key] = self.data[key][chunk_key]
                     else:
                         data_chunk[key] = self.data[key][i*len_data[key]:min((i+1)*len_data[key], len(self.data[key]))]
-                filename = self.data_filename + f"_{chunk_prefix}{i}.json"
+                # Adjust filename format here
+                today = datetime.now().strftime("%Y-%m-%d")
+                filename = f"data_{today}_{chunk_prefix}{i}.json"
                 if not self.allow_override and self.check_if_file_exists(filename):
                     logging.error("The data file for this day has already been created!")
                     sys.exit(0)
                 logging.info(f"Saving chunk {i}...")
                 self.save_json(filename, data_chunk)
         else:
-            self.save_json(self.data_filename + f"_{chunk_prefix}.json", self.data)
-
+            # Adjust filename format here for single chunk case
+            today = datetime.now().strftime("%Y-%m-%d")
+            filename = f"data_{today}_{chunk_prefix}.json"
+            if not self.allow_override and self.check_if_file_exists(filename):
+                logging.error("The data file for this day has already been created!")
+                sys.exit(0)
+            self.save_json(filename, self.data)
+            
     def get_datafile_from_s3(self) -> list[str]:
         "Get the list of datafiles in the S3 bucket from the start date to the end date (if defined)"
         logging.info("Collecting data files")
@@ -305,7 +313,7 @@ class S3Utils:
         for el in map(lambda x: (x.bucket_name, x.key), self.bucket.objects.all()):
             if "data_" in el[1]:
                 datafiles.append(el[1])
-        get_date = re.compile("data_([0-9]*-[0-9]*-[0-9]*).*")
+        get_date = re.compile("data_([0-9]+-[0-9]+-[0-9]+).*\.json")
         dates = [datetime.strptime(get_date.match(key).group(1), "%Y-%m-%d") for key in datafiles]
         datafiles_to_keep = []
         dates_to_keep = []
