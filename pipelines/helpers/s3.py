@@ -291,7 +291,7 @@ class S3Utils:
                         data_chunk[key] = self.data[key][i*len_data[key]:min((i+1)*len_data[key], len(self.data[key]))]
                 # Adjust filename format here
                 today = datetime.now().strftime("%Y-%m-%d")
-                filename = f"data_{today}_{chunk_prefix}{i}.json"
+                filename = f"data_{today}_{chunk_prefix}_{i}.json" if chunk_prefix else f"data_{today}_{i}.json"
                 if not self.allow_override and self.check_if_file_exists(filename):
                     logging.error("The data file for this day has already been created!")
                     sys.exit(0)
@@ -300,12 +300,11 @@ class S3Utils:
         else:
             # Adjust filename format here for single chunk case
             today = datetime.now().strftime("%Y-%m-%d")
-            filename = f"data_{today}_{chunk_prefix}.json"
+            filename = f"data_{today}_{chunk_prefix}.json" if chunk_prefix else f"data_{today}.json"
             if not self.allow_override and self.check_if_file_exists(filename):
                 logging.error("The data file for this day has already been created!")
                 sys.exit(0)
             self.save_json(filename, self.data)
-            
     def get_datafile_from_s3(self) -> list[str]:
         logging.info("Collecting data files")
         datafiles = []

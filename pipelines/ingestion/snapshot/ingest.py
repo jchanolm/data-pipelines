@@ -38,6 +38,7 @@ class SnapshotIngestor(Ingestor):
             current_dict["chainId"] = entry.get("network", "")
             current_dict["symbol"] = entry.get("symbol", "")
             current_dict["twitterHandle"] = entry.get("twitter", "")
+            current_dict['github'] = entry.get('github', )
             current_dict["twitterHandle"] = current_dict["twitterHandle"] if current_dict["twitterHandle"] else ""
 
             if "strategies" in entry and entry["strategies"]:
@@ -93,7 +94,7 @@ class SnapshotIngestor(Ingestor):
         for entry in self.scraper_data["proposals"]:
             current_dict = {}
             current_dict["snapshotId"] = entry["id"]
-            current_dict["ipfsLink"] = entry["ipfs"]
+            current_dict["url"] = entry["ipfs"]
             current_dict["address"] = entry["author"].lower() or ""
             current_dict["createdAt"] = entry["created"] or 0
             current_dict["type"] = entry["type"] or -1
@@ -105,6 +106,7 @@ class SnapshotIngestor(Ingestor):
             choices = self.cyphers.sanitize_text(json.dumps(entry["choices"]))
 
             current_dict["startDt"] = entry["start"] or 0
+            current_dict['choices'] = choices
             current_dict["endDt"] = entry["end"] or 0
             current_dict["state"] = entry["state"] or ""
             current_dict["url"] = entry["link"].strip() or ""
@@ -143,14 +145,15 @@ class SnapshotIngestor(Ingestor):
         space_data = self.process_spaces()
 
         # add space nodes
-        urls = self.save_json_as_csv(space_data["spaces"], f"ingestor_spaces_{self.asOf}")
-        self.cyphers.create_or_merge_spaces(urls)
+        # urls = self.save_json_as_csv(space_data["spaces"], f"ingestor_spaces_{self.asOf}")
+        # self.cyphers.create_or_merge_spaces(urls)
 
+        print(space_data['spaces'][0:5])
         # add twitter nodes, twitter-space relationships
         twitter_df = pandas.DataFrame(space_data["spaces"])[
-            ["snapshotId", "handle", "twitterProfileUrl"]
-        ].drop_duplicates(subset=["handle"])
-        twitter_df = twitter_df[twitter_df["handle"] != ""]
+            ["snapshotId", "twitterHandle"]
+        ].drop_duplicates(subset=["twitterHandle"])
+        twitter_df = twitter_df[twitter_df["twitterHandle"] != ""]
         twitter_dict = twitter_df.to_dict("records")
         urls = self.save_json_as_csv(twitter_dict, f"ingestor_twitter_{self.asOf}")
         self.cyphers.create_or_merge_space_twitter(urls)
@@ -159,6 +162,12 @@ class SnapshotIngestor(Ingestor):
         # add token nodes
         urls = self.save_json_as_csv(space_data["tokens"], f"ingestor_tokens_{self.asOf}")
         self.cyphers.create_or_merge_space_tokens(urls)
+
+        ## github df
+        github_df = pandas.DataFrame(space_data['spaces'])[['snapshotId', 'github']]
+        github_df.drop_duplicates(subset=['github'], inplace=True) 
+        github_urls = self.save_df_as_csv(github_df, f"data_spaces_githubs_{self.asOf}")
+        self.cyphers.create_connect_githubs(github_urls)
 
         # add strategy relationships (token-space)
         urls = self.save_json_as_csv(
@@ -214,11 +223,11 @@ class SnapshotIngestor(Ingestor):
 
     def run(self):
         self.ingest_spaces()
-        self.ingest_proposals()
-        self.ingest_votes()
+        # self.ingest_proposals()
+        # self.ingest_votes()
 
-        self.save_metadata()
-        self.save_data()
+        # self.save_metadata()
+        # self.save_data()
         logging.info("Run complete!")
 
 if __name__ == '__main__':
