@@ -21,49 +21,80 @@ class DiscourseCyphers(Cypher):
                         ON CREATE SET
                             post:Ingest,
                             post.text = posts.text,
-                            post.postNumber = posts.postNumber,
+                            post.postNumber = tointeger(posts.postNumber),
                             post.title = posts.title, 
                             post.author = posts.author,
-                            post.authorId = posts.user_id,
+                            post.authorId = tointeger(posts.user_id),
                             post.tags = posts.tags, 
                             post.category = posts.category,
-                            post.topicId = posts.topic_id,
-                            post.incomingLinkCount = posts.incomingLinkCount,
-                            post.readersCount = posts.readersCount,
-                            post.quoteCount = posts.quoteCount, 
-                            post.likes = posts.likes, 
-                            post.readsCount = posts.readsCount, 
-                            post.topicId = posts.topicId,
+                            post.topicId = tointeger(posts.topic_id),
+                            post.incomingLinkCount = tointeger(posts.incomingLinkCount),
+                            post.readersCount = tointeger(posts.readersCount),
+                            post.quoteCount = tointeger(posts.quoteCount), 
+                            post.likes = tointeger(posts.likes), 
+                            post.readsCount = tointeger(posts.readsCount), 
+                            post.topicId = tointeger(posts.topicId),
                             post.url = posts.url,
                             post.trustLevel = post.trustLevel,
-                            post.replyToPostNumber = posts.replyToPostNumber,
-                            post.createdDtSource = posts.createdDtSource
+                            post.replyToPostNumber = tointeger(posts.replyToPostNumber),
+                            post.publishedDt = posts.createdDtSource
                         ON MATCH SET
                             post:Ingest
                         RETURN COUNT(DISTINCT(post))"""
             count += self.query(query)[0].value()
         return count 
-
-
+    
     @count_query_logging
-    def create_replies(self):
+    def connect_posts_replies(self):
         count = 0 
         query = """
         MATCH (post:Discourse:Post)
-        MATCH (otherPost:Discourse:Post)
-        WHERE post.replyToPostNumber is NULL
-        AND otherPost.replyToPostNumber = post.postNumber
-        WITH post, otherPost
-        MERGE (otherPost)-[r:REPLY]->(post)
-        RETURN COUNT(DISTINCT(otherPost)) as repliesCreated
+        MATCH (otherpost:Discourse:Post)
+        WHERE post.replyToPostNumber = otherpost.postNumber
+        WITH post, otherpost
+        MERGE (post)-[r:REPLY]->(otherpost)
+        RETURN COUNT(DISTINCT(r))
         """
         count += self.query(query)[0].value()
         return count 
     
+    @count_query_logging
+    def create_authors(self, urls):
+        count = 0 
+        for url in urls: 
+            query = f"""
+            LOAD CSV WITH HEADERS FROM '{url}' as rows
+            MERGE (user:Account:Discourse {{userId: rows.authorId}})
+            ON CREATE SET
+                user.username = rows.author
+            ON MATCH SET
+                user.username = rows.author
+            RETURN COUNT(*)"""
+            count += self.query(query)[0].value()
+        return count 
+    
+    @count_query_logging 
+    def connect_authors(self, urls):
+        count = 0 
+        for url in urls:
+            query = f"""
+            LOAD CSV WITH HEADERS FROM '{url}' as rows
+            MATCH (user:Account:Discourse {{userId: rows.authorId}}) 
+            MATCH (post:Post {{postUuid: rows.postUuid}})
+            MERGE (user)-[r:PUBLISHED]->(post)
+            RETURN COUNT(DISTINCT(r))
+            """
+            print(query)
+            count += self.query(query)[0].value()
+        return count 
+
+
+
+    
 def create_authors(self, urls):
     count = 0 
     for url in urls:
-        query = """
+        query = f"""
         LOAD CSV WITH HEADERS FROM '{url}' AS users
         MERGE (user:Discourse:User:Ingest {{userId: users.userId}})
         ON CREATE SET

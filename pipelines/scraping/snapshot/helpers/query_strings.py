@@ -1,11 +1,42 @@
+spaces_query = """
+        {{
+            spaces(
+                first: {0},
+                skip: {1},
+                orderBy: "created",
+                orderDirection: asc
+            ) {{
+            id
+                name
+                about
+                avatar
+                terms
+                location
+                website
+                twitter
+                github
+                network
+                symbol
+                strategies {{
+                name
+                params
+                }}
+                admins
+                members
+                filters {{
+                minScore
+                onlyMembers
+                }}
+                plugins
+            }}
+        }}
+        """
+
 proposals_query = """
         {{
             proposals(
                 first: {0},
                 skip: {1},
-                where: {{
-                    space: "arbitrumfoundation.eth"
-                }},
                 orderBy: "created",
                 orderDirection: desc
             ) {{
@@ -35,6 +66,7 @@ proposals_query = """
             }}
         }}
         """
+
 proposal_status_query = """
         {{
             proposals(

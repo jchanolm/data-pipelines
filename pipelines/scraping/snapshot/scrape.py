@@ -1,83 +1,33 @@
-import requests
+from ..helpers import Scraper
+from .helpers.query_strings import spaces_query, proposals_query, votes_query, proposal_status_query
 import json
 import logging
 import time
-from ..helpers import Scraper
-from .helpers.queries import proposals_query
 
 class SnapshotScraper(Scraper):
-    def __init__(self):
-        super().__init__(bucket_name='snapshot')
-        self.snapshot_api_url = "https://hub.snapshot.org/graphql"
-        self.arb_space_id = "arbitrumfoundation.eth"
-        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        self.last_space_offset = 0
+    def __init__(self, bucket_name="snapshot"):
+        super().__init__(bucket_name)
+        self.snapshot_url = "https://hub.snapshot.org/graphql"
+        self.space_limit = 100
+        self.proposal_limit = 500
+        self.vote_limit = 1000
 
+        self.last_space_offset = 0  # we collect all spaces
 
-        self.proposals_query = f"""
-        {{
-            proposals(
-                where: {{
-                    space_in: ["{self.arb_space_id}"]
-                }},
-                first: 1000
-            ) {{
-                id
-                title
-                body
-                choices
-                start
-                end
-                state
-                author
-            }}
-        }}
-        """ 
-        self.space_limit = 1000
+        self.last_proposal_offset = 0
+        if "last_proposal_offset" in self.metadata:
+            self.last_proposal_offset = self.metadata["last_proposal_offset"]
 
-        self.spaces_query =  """
-
-        {{
-            spaces(
-                first: {0},
-                skip: {1},
-                orderBy: "created",
-                orderDirection: asc
-            ) {{
-            id
-                name
-                about
-                avatar
-                terms
-                location
-                website
-                twitter
-                github
-                network
-                symbol
-                strategies {{
-                name
-                params
-                }}
-                admins
-                members
-                filters {{
-                minScore
-                onlyMembers
-                }}
-                plugins
-            }}
-        }}
-        """
-
-
+        self.open_proposals = set()
+        if "open_proposals" in self.metadata:
+            self.open_proposals = set(self.metadata["open_proposals"])
 
     def make_api_call(self, query, counter=0, content=None):
         time.sleep(counter)
         if counter > 10:
             logging.error(content)
             raise Exception("Something went wrong while getting the results from the API")
-        content = self.post_request(self.snapshot_api_url, json={"query": query})
+        content = self.post_request(self.snapshot_url, json={"query": query})
         if "504: Gateway time-out" in content:
             return self.make_api_call(query, counter=counter + 1, content=content)
         data = json.loads(content)
@@ -85,121 +35,23 @@ class SnapshotScraper(Scraper):
             return self.make_api_call(query, counter=counter + 1, content=content)
         return data["data"]
 
-    def send_api_request(self, query, retry_count=0):
-        max_retries = 10
-        while retry_count <= max_retries:
-            try:
-                response = requests.post(self.snapshot_api_url, json={"query": query})
-                response.raise_for_status()  # Raises exception for 4XX or 5XX errors
-                data = response.json()
-                if "errors" in data:
-                    raise Exception(f"API response error: {data['errors']}")
-                return data["data"]
-            except requests.RequestException as e:
-                logging.error(f"Request error: {e}")
-                retry_count += 1
-                if retry_count > max_retries:
-                    logging.error("Max retries exceeded. Giving up.")
-                    return None
-            except Exception as e:
-                logging.error(f"Unhandled exception: {e}")
-                return None
-
-
-    def fetch_proposals(self):
-        logging.info("Fetching proposals...")
-        return self.send_api_request(self.proposals_query)
-
-    def get_all_votes_for_proposals(self, proposals):
-        votes_query_template = """
-        {{
-            votes (
-                first: {0},
-                skip: {1},
-                orderBy: "created",
-                orderDirection: desc,
-                where: {{
-                    proposal_in: ["{2}"]
-                }}
-            ) {{
-                id
-                ipfs
-                voter
-                created
-                choice
-                proposal {{
-                    id
-                    choices
-                }}
-                space {{
-                    id
-                    name
-                }}
-            }}
-        }}
-        """
-        
-        all_votes = []
-        for proposal in proposals:
-            proposal_id = proposal["id"]
-            proposal_title = proposal['title']
-            offset = 0
-            results = True
-            while results:
-                query = votes_query_template.format(1000, offset, proposal_id)
-                response = self.send_api_request(query)
-                time.sleep(.5)
-                if response:
-                    data = response["votes"]
-                    votes_count = len(data)
-                    if votes_count == 0:
-                        logging.info(f"No more votes found for {proposal_title}. Total votes retrieved: {len(all_votes)}")
-                        break
-                    try:
-                        if offset < 5000:
-                            all_votes.extend(data)
-                            logging.info(f"Retrieved {votes_count} votes for {proposal_title}. Total votes retrieved so far: {len(all_votes)}")
-                            offset += 1000
-                        else:
-                            logging.info(f"Reached maximum offset limit for {proposal_title}. Total votes retrieved: {len(all_votes)}")
-                            break
-                    except Exception as e:
-                        logging.error(f"Error fetching votes for {proposal_title} with offset {offset}: {str(e)}")
-                        break
-                else:
-                    logging.error(f"Failed to fetch additional votes for {proposal_title}.")
-                    break
-        return all_votes
-    
-    def refine_votes(self, votes):
-        refined_votes = []
-        for vote in votes:
-            refined_vote = {
-                'proposalId': vote['proposal']['id'],
-                'voter': vote['voter'].lower(),
-                'choice': vote['choice'],
-                'id': vote['id']
-            }
-            refined_votes.append(refined_vote)
-        return refined_votes
-    
-    def get_all_spaces(self):
+    def get_spaces(self):
         logging.info("Getting spaces...")
         raw_spaces = []
         offset = self.last_space_offset
         results = True
-        while results:
+        while True:
             self.metadata["last_space_offset"] = offset
             if len(raw_spaces) % 1000 == 0:
                 logging.info(f"Current Spaces: {len(raw_spaces)}")
-            query = self.spaces_query.format(self.space_limit, offset)
+            query = spaces_query.format(self.space_limit, offset)
             data = self.make_api_call(query)
-            results = data.get("spaces")  # Use get to avoid KeyError if "spaces" is missing
-            if results:  # Check if results is not None or empty
-                raw_spaces.extend(results)
-                offset += self.space_limit
-            else:  # Break the loop if results is None or empty
+            if not data["spaces"]:  # Check if "spaces" is empty to break the loop
                 break
+            results = data["spaces"]
+            if results is not None:  # Ensure results is not None before extending raw_spaces
+                raw_spaces.extend(results)
+            offset += self.space_limit
         logging.info(f"Total Spaces acquired: {len(raw_spaces)}")
         ens_list = self.parallel_process(self.get_ens_info, raw_spaces, description="Getting information about ENS holders")
         for i in range(len(raw_spaces)):
@@ -207,26 +59,89 @@ class SnapshotScraper(Scraper):
                 raw_spaces[i]["ens"] = ens_list[i]
 
         final_spaces = [space for space in raw_spaces if space]
-        self.data["spaces"] = raw_spaces
+        self.data["spaces"] = final_spaces
         logging.info(f"Final spaces count: {len(final_spaces)}")
 
+    def get_proposals(self):
+        logging.info("Getting proposals...")
+        raw_proposals = []
+        first = 1000  # Starting with the maximum allowed limit for "first"
+        skip = 0
+        more_data = True
+
+        while more_data:
+            self.metadata["last_proposal_offset"] = skip
+            if len(raw_proposals) % 1000 == 0:
+                logging.info(f"Current Proposals: {len(raw_proposals)}")
+            query = proposals_query.format(first, skip)
+            data = self.make_api_call(query)
+            results = data["proposals"]
+            if results:
+                raw_proposals.extend(results)
+                skip += len(results)  # Increment skip by the number of results fetched
+            else:
+                more_data = False  # Stop loop if no results are returned
+
+            # Reset skip and adjust first if skip reaches or exceeds the limit
+            if skip >= 5000:
+                skip = 0  # Reset skip to start from the beginning for the next batch
+                # Logic to adjust 'first' if needed, based on specific requirements
+
+        proposals = [proposal for proposal in raw_proposals if proposal]
+        logging.info(f"Total Proposals: {len(proposals)}")
+        self.data["proposals"] = proposals
+
+
+    def scrape_votes(self, proposal_ids):
+        raw_votes = []
+        offset = 0
+        results = True
+        while results:
+            offset += self.vote_limit
+            query = votes_query.format(self.vote_limit, offset, json.dumps(proposal_ids))
+            data = self.make_api_call(query)
+            results = data["votes"]
+            if type(results) != list:
+                logging.error("Something went wrong while getting the data that was not caught correctly!")
+            if results:
+                raw_votes.extend(results)
+        return raw_votes
+
+    def get_votes(self):
+        logging.info("Getting votes...")
+        proposal_ids = list(self.open_proposals.union(set([proposal["id"] for proposal in self.data["proposals"]])))
+        
+        proposals = [proposal_ids[i : i + 5] for i in range(0, len(proposal_ids), 5)]
+        raw_votes = self.parallel_process(self.scrape_votes, proposals, description="Getting all the votes")
+        votes = [vote for votes in raw_votes for vote in votes]
+        logging.info(f"Total Votes: {len(votes)}")
+        self.data["votes"] = votes
+
+    def get_proposals_status(self):
+        proposal_statuses = []
+        for proposal_id in self.open_proposals:
+            query = proposal_status_query.format(proposal_id)
+            data = self.make_api_call(query)
+            if len(data["proposals"]) == 0:
+                logging.error(f"Something unexpected happened with proposal id: {proposal_id}")
+            if data["proposals"]:
+                proposal_statuses += data["proposals"]
+        open_proposals = [proposal["id"] for proposal in proposal_statuses if proposal["state"] != "closed"]
+        open_proposals += [proposal["id"] for proposal in self.data["proposals"] if proposal["state"] != "closed"]
+        self.open_proposals = list(set(open_proposals))
+        self.metadata["open_proposals"] = self.open_proposals
 
     def run(self):
-        # self.data['spaces'] = self.get_all_spaces()
-        proposals_response = self.fetch_proposals()
-        proposals = proposals_response.get('proposals', [])
-        all_votes = self.get_all_votes_for_proposals(proposals)
-        refined_votes = self.refine_votes(all_votes)
-        # self.data['proposals'] = proposals 
-        # self.data['votes'] = refined_votes
-        # if proposals:
-        #     most_recent_proposal = max(proposals, key=lambda x: x['end'])
-        #     self.metadata['last_proposal_end_dt'] = most_recent_proposal['end']
-        #     self.metadata['last_proposal_id'] = most_recent_proposal['id']
-        #     logging.info(f"Total votes fetched and refined: {len(refined_votes)}")
-        self.save_data()
+        # self.get_spaces()
+        self.get_proposals()
+        # self.get_votes()
+        # self.get_proposals_status()
+
         self.save_metadata()
+        self.save_data()
+
 
 if __name__ == "__main__":
+
     scraper = SnapshotScraper()
     scraper.run()
