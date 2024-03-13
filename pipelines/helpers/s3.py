@@ -307,30 +307,29 @@ class S3Utils:
             self.save_json(filename, self.data)
             
     def get_datafile_from_s3(self) -> list[str]:
-        "Get the list of datafiles in the S3 bucket from the start date to the end date (if defined)"
         logging.info("Collecting data files")
         datafiles = []
         for el in map(lambda x: (x.bucket_name, x.key), self.bucket.objects.all()):
             if "data_" in el[1]:
                 datafiles.append(el[1])
-        get_date = re.compile("data_([0-9]+-[0-9]+-[0-9]+).*\.json")
-        dates = [datetime.strptime(get_date.match(key).group(1), "%Y-%m-%d") for key in datafiles]
-        datafiles_to_keep = []
-        dates_to_keep = []
-        for datafile, date in sorted(zip(datafiles, dates), key=lambda el: el[1]):
-            if not self.start_date:
-                self.start_date = date
-            if date >= self.start_date:
-                if self.end_date and date >= self.end_date:
-                    break
-                datafiles_to_keep.append(datafile)
-                dates_to_keep.append(date)
-        if len(dates_to_keep) == 0:
-            logging.error("No data file found that match the current date range")
-            sys.exit(1)
-        if not self.end_date:
-            self.end_date = max(dates_to_keep)
-        logging.info("Datafiles for ingestion: {}".format(",".join(datafiles_to_keep)))
+        # This regex matches the date in 'data_YYYY-MM-DD.json' or 'data_YYYY-M-D_.json' format.
+        get_date = re.compile(r"data_(\d{4}-\d{1,2}-\d{1,2})[^.]*\.json")
+
+        dates = []
+        for key in datafiles:
+            match = get_date.match(key)
+            if match:
+                # Strips any non-numeric characters after the date
+                date_str = re.sub(r"[^\d-]", "", match.group(1))
+                try:
+                    # Parses the date with the potential single digit month/day
+                    dates.append(datetime.strptime(date_str, "%Y-%m-%d"))
+                except ValueError as e:
+                    logging.error(f"Error parsing date from filename {key}: {e}")
+                    # Handle the error or continue
+
+        datafiles_to_keep = [f for d, f in sorted(zip(dates, datafiles))]
+        # Continue with your existing logic
         return datafiles_to_keep
 
     def get_files_urls_from_s3(self, filter: str) -> list[str]:
