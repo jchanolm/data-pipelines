@@ -3,6 +3,10 @@ from datetime import datetime
 import logging
 import os
 from ...helpers import Base
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+options = Options()
+options.set_preference("general.useragent.override", "Firefox: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0")
 
 # This class is the base class for all scrapers.
 # Every scraper must inherit this class and define its own run function
@@ -20,3 +24,5 @@ class Scraper(Base):
     def run(self):
         "Main function to be called. Every scrapper must implement its own run function !"
         raise NotImplementedError("ERROR: the run function has not been implemented!")
+
+

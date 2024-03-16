@@ -295,7 +295,7 @@ class S3Utils:
                 if not self.allow_override and self.check_if_file_exists(filename):
                     logging.error("The data file for this day has already been created!")
                     sys.exit(0)
-                logging.info(f"Saving chunk {i}...")
+                logging.info(f"Saving chunk {i}...") 
                 self.save_json(filename, data_chunk)
         else:
             # Adjust filename format here for single chunk case
