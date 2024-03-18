@@ -75,67 +75,181 @@ class TallyScraper(Scraper):
     }"""
         
         variables = {"chainId": "eip155:42161", "governorIds": "0xf07DeD9dC292157749B6Fd268E37DF6EA38395B9"}
-        logging.info("Querying proposals...")
+        logging.info("Collecting voters for proposals....")
         results = self.send_tally_api_request(query, variables=variables)
         self.data['data'] = results
 
 
-    # def get_propsals(self, proposal_ids):
 
-        ## go to url
-        ### get title
-        #### get description (whole)
-        #####
-    # def get_proposal_urls(self):
-    #     self.selenium_driver.get(self.arb_proposals_base_url) 
-    #     time.sleep(2.5)     
-    #     proposal_links = self.selenium_driver.find_elements(By.CSS_SELECTOR, 'a.script.props.pageprob')
-    #     print(proposal_links)
-    #    # proposal_links = self.selenium_driver.find_elements(By.c,'//a[contains(@class, "chakra-link") and contains(@href, "proposal")]')      
-       # proposal_hrefs = [link.get_attribute('href') for link in proposal_links]
-      #  print(proposal_hrefs)
-      #  proposal_links_titles = []
+    def get_delegates(self):
+        query = """
+        query Delegates($input: DelegatesInput!) {
+        delegates(input: $input) {
+            nodes {
+            ... on Delegate {
+                id
+                account {
+                id
+                safes
+                address
+                }
+                chainId
+                delegatorsCount
+                votesCount
+                statement {
+                statement
+                discourseUsername
+                }
+                
+            }
+        }
+            pageInfo {
+            firstCursor
+            lastCursor
+            count
+            }
+        }
+        }
+    """
+        all_delegates = []
+        variables = {
+            "input": {
+                "filters": {
+                    "governorId": "eip155:42161:0xf07DeD9dC292157749B6Fd268E37DF6EA38395B9"
+                },
+                "page": {
+                    "limit": 100
+                },
+                "sort": {
+                    "isDescending": True,
+                    "sortBy": "VOTES"
+                }
+            }
+        }
 
-        # go to base url 
-
-
-
-    #def close_selenium_driver(self):
-      #  self.selenium_driver.close()
-
-
-    # def orgs_members():
-    #     ## creators too
-        ## return XXX
+        has_more_pages = True
+        while has_more_pages:
+            logging.info("Collecting delegates...")
+            results = self.send_tally_api_request(query, variables=variables)
+            time.sleep(.5)
+            if not results or 'delegates' not in results or not results['delegates']['nodes']:
+                has_more_pages = False
+                continue
+            # Filter delegates with more than one delegator
+            delegates_with_delegators = [delegate for delegate in results['delegates']['nodes'] if delegate.get('delegatorsCount', 0) > 1]
+            if not delegates_with_delegators:
+                has_more_pages = False
+                continue
+            all_delegates.extend(delegates_with_delegators)
+            last_cursor = results['delegates']['pageInfo'].get('lastCursor')
+            if last_cursor:
+                variables['input']['page']['afterCursor'] = last_cursor
+            else:
+                has_more_pages = False
+            logging.info(f"Retrieved {len(all_delegates)} delegates...")
+        logging.info("Completed delegate collection")
+        return all_delegates
     
+    def fetch_delegators_for_delegate(self, delegate_address):
+        query = """
+        query Delegators($input: DelegationsInput!) {
+            delegators(input: $input) {
+                nodes {
+                    ... on DelegationV2 {
+                        id
+                        blockNumber
+                        blockTimestamp
+                        chainId
+                        delegator {
+                            id
+                            address
+                        }
+                        delegate {
+                            id
+                            account {
+                                id
+                                address
+                            }
+                        }
+                        governor {
+                            id
+                        }
+                        token {
+                            id
+                            symbol
+                        }
+                        votes
+                    }
+                }
+                pageInfo {
+                    firstCursor
+                    lastCursor
+                    count
+                }
+            }
+        }
+        """
 
-    ## get whether prop passed -- interesting to judge voters baser on that, if ou constantly vote for shit fails
-    ### or no, etc
-    ### tag snapshot vote status as well
-    ## also good for discourse collusion
+        delegators = []
+        afterCursor = None
 
-### comments
-### asSOCIATE wallets w/forum authors
-### get links to proposals and snapshots
+        while True:
+            variables = {
+                "input": {
+                    "filters": {
+                        "address": delegate_address
+                    },
+                    "page": {
+                        "limit": 100,
+                        "afterCursor": afterCursor
+                    },
+                    "sort": {
+                        "isDescending": True,
+                        "sortBy": "VOTES"
+                    }
+                }
+            }
+            logging.info(f"Processing delegators for {delegate_address}...")
+            results = self.send_tally_api_request(query, variables=variables)
+            time.sleep(.5)
+            if not results or 'delegators' not in results or not results['delegators']['nodes']:
+                break  # No more pages to process or error in response
+            current_delegators = results['delegators']['nodes']
+            logging.info(f"Collected {len(current_delegators)} delegators...")
+            delegators.extend(current_delegators)
+            logging.info(f"{len(delegators)} collected total")
+            last_cursor = results['delegators']['pageInfo'].get('lastCursor')
+            if not last_cursor:
+                break  # No more pages to process
+            afterCursor = last_cursor
 
-    # def scrape_home
-    # ### safes 
+        return delegators
+    
+    def fetch_all_delegators(self, delegate_addresses):
+        all_delegators = []
+        logging.info("Collecting delegators...")
+        for delegate_address in delegate_addresses:
+            logging.info(f"Collecting delegators for {delegate_address}...")
+            delegators = self.fetch_delegators_for_delegate(delegate_address)
+            all_delegators.extend(delegators)
+            print(f"Processed {delegate_address}, found {len(delegators)} delegators.")
+            print(f"Captured {len(all_delegators)} in total.")
+
+        return all_delegators
+
+# Assuming `delegate_addresses` is a list of delegate addresses you want to process
+# all_delegators = fetch_all_delegators(delegate_addresses)
+
     def run(self):
         self.arb_votes_voters()
-        # self.data['votes'] = self.arb_votes_voters()
-        self.save_data()
+        self.data['votes'] = self.arb_votes_voters()
+        delegates = self.get_delegates()
+        self.data['delegates'] = delegates
+        addresses = [i.get('account').get('address') for i in delegates]
+        delegators = self.fetch_all_delegators(addresses)
+        self.data['delegators'] = delegators    
         self.save_metadata()
-        #self.close_selenium_driver()
-        # self.arb_votes_voters()
-        # self.save_metadata()
-        # self.save_data()
-
-        # self.save_data()
-        # self.save_metadata()
-
-
-## postProcessor -- safes + signers
-
+        self.save_data()
 
 if __name__ == "__main__":
     S = TallyScraper()
