@@ -26,7 +26,7 @@ class TallyScraper(Scraper):
 
 
     def send_tally_api_request(self, query, variables=None, retry_count=0):
-        max_retries = 0  # Adjusted max_retries to allow for retries
+        max_retries = 10  # Adjusted max_retries to allow for retries
         while retry_count <= max_retries:
             try:
                 payload = {"query": query, "variables": variables}  # Include variables in the payload
