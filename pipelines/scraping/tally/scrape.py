@@ -26,7 +26,7 @@ class TallyScraper(Scraper):
 
 
     def send_tally_api_request(self, query, variables=None, retry_count=0):
-        max_retries = 10  # Adjusted max_retries to allow for retries
+        max_retries = 25  # Adjusted max_retries to allow for retries
         while retry_count <= max_retries:
             try:
                 payload = {"query": query, "variables": variables}  # Include variables in the payload
@@ -226,14 +226,22 @@ class TallyScraper(Scraper):
         return delegators
     
     def fetch_all_delegators(self, delegate_addresses):
+        count = 0 
         all_delegators = []
+        logging.info(f"Fetching {len(delegate_addresses)} delegators...")
         logging.info("Collecting delegators...")
         for delegate_address in delegate_addresses:
-            logging.info(f"Collecting delegators for {delegate_address}...")
-            delegators = self.fetch_delegators_for_delegate(delegate_address)
-            all_delegators.extend(delegators)
-            print(f"Processed {delegate_address}, found {len(delegators)} delegators.")
-            print(f"Captured {len(all_delegators)} in total.")
+            try:
+                count += 1
+                logging.info(f"Collecting delegators for {delegate_address}..., the {str(count)} delegator out of {len(delegate_addresses)}")
+                delegators = self.fetch_delegators_for_delegate(delegate_address)
+                count += 1
+                all_delegators.extend(delegators)
+                print(f"Processed {delegate_address}, found {len(delegators)} delegators.")
+                print(f"Captured {len(all_delegators)} in total.")
+            except Exception as e:
+                logging.error(f"Ran ino an error pulling delegators: {e}")
+                pass 
 
         return all_delegators
 
@@ -248,8 +256,8 @@ class TallyScraper(Scraper):
         addresses = [i.get('account').get('address') for i in delegates]
         delegators = self.fetch_all_delegators(addresses)
         self.data['delegators'] = delegators    
-        self.save_metadata()
         self.save_data()
+        self.save_metadata()
 
 if __name__ == "__main__":
     S = TallyScraper()
