@@ -132,10 +132,10 @@ class SnapshotScraper(Scraper):
         self.metadata["open_proposals"] = self.open_proposals
 
     def run(self):
-        # self.get_spaces()
+        self.get_spaces()
         self.get_proposals()
-        # self.get_votes()
-        # self.get_proposals_status()
+        self.get_votes()
+        self.get_proposals_status()
 
         self.save_metadata()
         self.save_data()
