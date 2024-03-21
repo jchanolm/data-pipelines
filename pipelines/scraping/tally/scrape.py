@@ -195,7 +195,8 @@ class TallyScraper(Scraper):
             variables = {
                 "input": {
                     "filters": {
-                        "address": delegate_address
+                        "address": delegate_address,
+                        "governorId": "eip155:42161:0xf07DeD9dC292157749B6Fd268E37DF6EA38395B9"
                     },
                     "page": {
                         "limit": 100,
@@ -233,7 +234,6 @@ class TallyScraper(Scraper):
         logging.info("Collecting delegators...")
         for delegate_address in delegate_addresses:
             try:
-                count += 1
                 logging.info(f"Collecting delegators for {delegate_address}..., the {str(count)} delegator out of {len(delegate_addresses)}")
                 delegators = self.fetch_delegators_for_delegate(delegate_address)
                 count += 1
@@ -246,21 +246,17 @@ class TallyScraper(Scraper):
 
         return all_delegators
 
-# Assuming `delegate_addresses` is a list of delegate addresses you want to process
-# all_delegators = fetch_all_delegators(delegate_addresses)
 
     def run(self):
-        # self.arb_votes_voters()
-        # self.data['votes'] = self.arb_votes_voters()
+        self.arb_votes_voters()
+        self.data['votes'] = self.arb_votes_voters()
         delegates = self.get_delegates()
         self.data['delegates'] = delegates 
+        addresses = [i.get('account').get('address') for i in delegates]
+        delegators = self.fetch_all_delegators(addresses)
+        self.data['delegators'] = delegators    
         self.save_data()
-        # self.data['delegates'] = delegates
-        # addresses = [i.get('account').get('address') for i in delegates]
-        # delegators = self.fetch_all_delegators(addresses)
-        # self.data['delegators'] = delegators    
-        # self.save_data()
-        # self.save_metadata()
+        self.save_metadata()
 
 if __name__ == "__main__":
     S = TallyScraper()
