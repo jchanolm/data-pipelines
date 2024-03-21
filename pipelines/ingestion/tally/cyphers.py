@@ -163,3 +163,72 @@ class TallyCyphers(Cypher):
             count += self.query(query)[0].value()
         return count 
             
+
+    @count_query_logging 
+    def create_delegates_main(self, urls):
+        count = 0 
+        for url in urls:
+            query = f"""
+            LOAD CSV WITH HEADERS FROM '{url}' as rows 
+            MERGE (delegate:Wallet {{address: rows.address}})
+            ON CREATE SET
+                delegate:Delegate,
+                delegate.tallyId = rows.id,
+                delegate.votesCount = rows.votesCount, 
+                delegate.delegatorsCount = rows.delegatorsCount
+            ON MATCH SET 
+                delegate:Delegate,
+                delegate.tallyId = rows.id
+            RETURN COUNT(delegate)
+            """
+            count += self.query(query)[0].value()
+        return count 
+
+    @count_query_logging
+    def set_delegates_statement(self, urls):
+        count = 0 
+        for url in urls:
+            query = f"""
+            LOAD CSV WITH HEADERS FROM '{url}' as rows
+            MATCH (delegate:Wallet {{address: rows.address}})
+            SET delegate.delegateStatement = rows.delegateStatement
+            RETURN COUNT(delegate)
+            """
+            count += self.query(query)[0].value()
+        return count 
+
+    @count_query_logging
+    def connect_delegates_discourse(self, urls):
+        count = 0 
+        for url in urls:
+            query = f"""
+            LOAD CSV WITH HEADERS FROM '{url}' as rows
+            WITH rows 
+            WHERE rows.discourseUsername is not Null
+            MERGE (discourse:Account:Discourse {{username: rows.discourseUsername}})
+            RETURN COUNT(DISTINCT(discourse))
+            """
+            print(query)
+            count += self.query(query)[0].value()
+
+            query_next = f"""
+            LOAD CSV WITH HEADERS FROM '{url}' AS rows
+            WITH rows 
+            WHERE rows.discourseUsername IS NOT NULL AND size(rows.discourseUsername) > 1
+            MATCH (delegate:Wallet:Delegate {{address: rows.address}})
+            SET delegate.username = rows.discourseUsername
+            RETURN COUNT(delegate)
+            """
+            print(query_next)
+            count += self.query(query_next)[0].value()
+            query_next_next = """
+            MATCH (discourse:Discourse:Account)
+            MATCH (wallet:Wallet:Delegate)
+            WHERE discourse.username  = wallet.discourseUsername
+            MERGE (wallet)-[r:ACCOUNT]->(discourse)
+            SET r.source = 'Tally'
+            RETURN COUNT(DISTINCT(r))
+            """
+            print(query_next_next)
+            count += self.query(query_next_next)[0].value()
+        return count 

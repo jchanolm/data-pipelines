@@ -5,7 +5,6 @@ import time
 import json
 import os 
 import requests as requests
-from bs4 import BeautifulSoup
 
                                         
 
@@ -90,7 +89,6 @@ class TallyScraper(Scraper):
                 id
                 account {
                 id
-                safes
                 address
                 }
                 chainId
@@ -122,7 +120,7 @@ class TallyScraper(Scraper):
                 },
                 "sort": {
                     "isDescending": True,
-                    "sortBy": "VOTES"
+                    "sortBy": "DELEGATORS"
                 }
             }
         }
@@ -131,13 +129,13 @@ class TallyScraper(Scraper):
         while has_more_pages:
             logging.info("Collecting delegates...")
             results = self.send_tally_api_request(query, variables=variables)
-            time.sleep(.5)
+            time.sleep(.75)
             if not results or 'delegates' not in results or not results['delegates']['nodes']:
                 has_more_pages = False
                 continue
-            # Filter delegates with more than one delegator
-            delegates_with_delegators = [delegate for delegate in results['delegates']['nodes'] if delegate.get('delegatorsCount', 0) > 1]
-            if not delegates_with_delegators:
+            # Filter delegates with more than one vote
+            delegates_with_delegators = [delegate for delegate in results['delegates']['nodes'] if int(delegate.get('delegatorsCount', 0)) > 2]
+            if not delegates_with_delegators and not delegates_with_delegators:
                 has_more_pages = False
                 continue
             all_delegates.extend(delegates_with_delegators)
@@ -210,18 +208,21 @@ class TallyScraper(Scraper):
                 }
             }
             logging.info(f"Processing delegators for {delegate_address}...")
-            results = self.send_tally_api_request(query, variables=variables)
-            time.sleep(.5)
-            if not results or 'delegators' not in results or not results['delegators']['nodes']:
-                break  # No more pages to process or error in response
-            current_delegators = results['delegators']['nodes']
-            logging.info(f"Collected {len(current_delegators)} delegators...")
-            delegators.extend(current_delegators)
-            logging.info(f"{len(delegators)} collected total")
-            last_cursor = results['delegators']['pageInfo'].get('lastCursor')
-            if not last_cursor:
-                break  # No more pages to process
-            afterCursor = last_cursor
+            try:
+                results = self.send_tally_api_request(query, variables=variables)
+                time.sleep(.75)
+                if not results or 'delegators' not in results or not results['delegators']['nodes']:
+                    break  # No more pages to process or error in response
+                current_delegators = results['delegators']['nodes']
+                logging.info(f"Collected {len(current_delegators)} delegators...")
+                delegators.extend(current_delegators)
+                logging.info(f"{len(delegators)} collected total")
+                last_cursor = results['delegators']['pageInfo'].get('lastCursor')
+                if not last_cursor:
+                    break  # No more pages to process
+                afterCursor = last_cursor
+            except Exception as e:
+                logging.info(f"Some error retrieving delegators: {e}")
 
         return delegators
     
@@ -249,15 +250,17 @@ class TallyScraper(Scraper):
 # all_delegators = fetch_all_delegators(delegate_addresses)
 
     def run(self):
-        self.arb_votes_voters()
-        self.data['votes'] = self.arb_votes_voters()
+        # self.arb_votes_voters()
+        # self.data['votes'] = self.arb_votes_voters()
         delegates = self.get_delegates()
-        self.data['delegates'] = delegates
-        addresses = [i.get('account').get('address') for i in delegates]
-        delegators = self.fetch_all_delegators(addresses)
-        self.data['delegators'] = delegators    
+        self.data['delegates'] = delegates 
         self.save_data()
-        self.save_metadata()
+        # self.data['delegates'] = delegates
+        # addresses = [i.get('account').get('address') for i in delegates]
+        # delegators = self.fetch_all_delegators(addresses)
+        # self.data['delegators'] = delegators    
+        # self.save_data()
+        # self.save_metadata()
 
 if __name__ == "__main__":
     S = TallyScraper()

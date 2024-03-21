@@ -1,10 +1,13 @@
-from pipelines.ingestion.helpers.ingestor import Ingestor
 from .cyphers import TallyCyphers
-
-import json
-import logging
+from ..helpers import Ingestor
+from ...helpers import Utils
+from ...helpers import Constraints, Indexes, Queries
+from ...helpers import count_query_logging
+import datetime 
+import logging 
 import pandas as pd
-import datetime
+import json 
+import re 
 
 
 
@@ -72,12 +75,57 @@ class TallyIngestor(Ingestor):
         votes_urls = self.save_df_as_csv(votes_df, f"data_tally_votes_{self.asOf}.csv")
         self.cyphers.connect_votes(votes_urls)
 
+    def process_delegates(self):
+        delegates = self.scraper_data['delegates']
+        delegates_unnested = [
+            {
+                'id': i.get('id'),
+                'address': i.get('account').get('address').lower(),
+                'delegatorsCount': i.get('delegatorsCount'),
+                'votesCount': i.get('votesCount'),
+                'delegateStatement': i.get('statement', {}).get('statement', '') if i.get('statement') and i.get('statement').get('statement') not in [None, ''] else None,
+                'discourseUsername': i.get('statement', {}).get('discourseUsername', '').strip().lower() if i.get('statement') and i.get('statement').get('discourseUsername') not in [None, ''] else None
+            }
+        for i in delegates
+        ]
+        delegates_unnested_df = pd.DataFrame(delegates_unnested)
+        delegates_unnested_df.to_csv('gay.csv')
+        delegates_unnested_df.to_csv('nodiscourse.csv')
+
+        ## metadata
+        delegates_main = delegates_unnested_df[['id', 'address', 'delegatorsCount', 'votesCount']]
+        delegates_main_urls = self.save_df_as_csv(delegates_main, f"delegates_data_{self.asOf}.csv")
+        # self.cyphers.create_delegates_main(delegates_main_urls)
+
+        ## statement text 
+        delegates_statements_df = delegates_unnested_df[['address', 'delegateStatement']]
+        delegates_statements_df = delegates_statements_df.dropna(subset=['delegateStatement'])
+        delegates_statements_urls = self.save_df_as_csv(delegates_statements_df, f"delegates_statements_data{self.asOf}.csv")
+        # self.cyphers.set_delegates_statement(delegates_statements_urls)
+
+        # discourse
+
+        # self.cyphers.connect_delegates_discourse(urls)
+        delegates_discourse_df = delegates_unnested_df[['address', 'discourseUsername']]
+        delegates_discourse_df = delegates_discourse_df.dropna(subset=['discourseUsername'])
+        delegates_discourse_df = delegates_discourse_df[delegates_discourse_df['discourseUsername'] != '']
+        delegates_discourse_urls = self.save_df_as_csv(delegates_discourse_df, f"delegates_discourse_data_{self.asOf}.csv")
+        self.cyphers.connect_delegates_discourse(delegates_discourse_urls)
+
+        
+        
+
+
+
+
+
 
 
     def run(self):
         # self.proccess_proposals()
         # self.process_voters()
-        self.process_votes()
+        # self.process_votes()
+        self.process_delegates()
     
 if __name__ == '__main__':
     ingestor = TallyIngestor()
