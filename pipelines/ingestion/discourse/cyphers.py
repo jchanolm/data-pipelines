@@ -66,9 +66,9 @@ class DiscourseCyphers(Cypher):
             LOAD CSV WITH HEADERS FROM '{url}' as rows
             MERGE (user:Account:Discourse {{userId: rows.authorId}})
             ON CREATE SET
-                user.username = rows.author
+                user.handle = rows.author
             ON MATCH SET
-                user.username = rows.author
+                user.handle = rows.author
             RETURN COUNT(*)"""
             count += self.query(query)[0].value()
         return count 
@@ -98,7 +98,7 @@ def create_authors(self, urls):
         LOAD CSV WITH HEADERS FROM '{url}' AS users
         MERGE (user:Discourse:User:Ingest {{userId: users.userId}})
         ON CREATE SET
-            user.userName = users.userName
+            user.handle = users.userName
         ON MATCH 
             SET user:Ingest
         RETURN COUNT(user)

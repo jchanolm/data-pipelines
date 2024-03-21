@@ -205,7 +205,7 @@ class TallyCyphers(Cypher):
             LOAD CSV WITH HEADERS FROM '{url}' as rows
             WITH rows 
             WHERE rows.discourseUsername is not Null
-            MERGE (discourse:Account:Discourse {{username: rows.discourseUsername}})
+            MERGE (discourse:Account:Discourse {{handle: rows.discourseUsername}})
             RETURN COUNT(DISTINCT(discourse))
             """
             print(query)
@@ -224,7 +224,7 @@ class TallyCyphers(Cypher):
             query_next_next = """
             MATCH (discourse:Discourse:Account)
             MATCH (wallet:Wallet:Delegate)
-            WHERE discourse.username  = wallet.discourseUsername
+            WHERE discourse.handle  = wallet.handle
             MERGE (wallet)-[r:ACCOUNT]->(discourse)
             SET r.source = 'Tally'
             RETURN COUNT(DISTINCT(r))
