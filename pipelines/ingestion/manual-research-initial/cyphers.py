@@ -17,13 +17,8 @@ class ManualCyphers(Cypher):
         for url in urls:
             query = f"""
             LOAD CSV WITH HEADERS FROM '{url}' as rows
-            MERGE (grantee:Grantee:Entity {{name: rows.name}})
-            ON CREATE SET
-                grantee.createdDt = '{self.asOf}'
-            ON MATCH SET
-                grantee.updatedDt = '{self.asOf}'
-            RETURN 
-                COUNT(grantee)"""
+            MERGE (grantee:Entity {{name: rows.name}})
+            RETURN COUNT(grantee)"""
             count += self.query(query)[0].value()
         return count
 
@@ -33,13 +28,8 @@ class ManualCyphers(Cypher):
         for url in urls:
             query = f"""
             LOAD CSV WITH HEADERS FROM '{url}' as rows
-            MERGE (grantee:Grantee:Entity {{name: rows.name}}) 
-            ON CREATE SET
-               grantee.createdDt = '{self.asOf}'
-            ON MATCH SET
-                grantee:Arbitrum
-            RETURN 
-                COUNT(grantee)
+            MERGE (grantee:Entity {{name: rows.name}}) 
+            RETURN COUNT(grantee)
             """
             count += self.query(query)[0].value()
         return count
@@ -51,13 +41,7 @@ class ManualCyphers(Cypher):
             query = f"""
             LOAD CSV WITH HEADERS FROM '{url}' as rows
             MERGE (twitter:Account:Twitter {{handle: rows.twitterHandle}})
-            ON CREATE SET
-                twitter.createdDt = '{self.asOf}',
-                twitter.updatedDt = '{self.asOf}'
-            ON MATCH SET
-                twitter.updatedDt = '{self.asOf}'
-            RETURN 
-                COUNT(twitter)
+            RETURN COUNT(twitter)
             """
             count += self.query(query)[0].value()
         return count
@@ -68,8 +52,8 @@ class ManualCyphers(Cypher):
         for url in urls:
             query = f"""
             LOAD CSV WITH HEADERS FROM '{url}' AS rows
-            MATCH (twitter:Twitter:Account {{handle: rows.twitterHandle}})
-            MATCH (grantee:Grantee {{name: rows.name}})
+            MATCH (twitter:Account {{handle: rows.twitterHandle}})
+            MATCH (grantee:Entity {{name: rows.name}})
             MERGE (grantee)-[r:ACCOUNT]->(twitter)
             RETURN COUNT(DISTINCT(twitter))
             """
@@ -84,7 +68,7 @@ class ManualCyphers(Cypher):
             LOAD CSV WITH HEADERS FROM '{url}' AS rows
             MERGE (website:Website:Account {{url: rows.websiteUrl}})
             WITH website, rows
-            MATCH (entity:Entity:Grantee {{name: rows.name}})
+            MATCH (entity:Entity {{name: rows.name}})
             MERGE (entity)-[r:ACCOUNT]->(website)
             RETURN COUNT(website)
             """
@@ -99,7 +83,7 @@ class ManualCyphers(Cypher):
             LOAD CSV WITH HEADERS FROM '{url}' AS rows
             MERGE (github:Github:Account {{handle: rows.githubHandle}})
             WITH github, rows
-            MATCH (entity:Entity:Grantee {{name: rows.name}})
+            MATCH (entity:Entity {{name: rows.name}})
             MERGE (entity)-[r:ACCOUNT]->(github)
             RETURN COUNT(github)
             """
@@ -114,7 +98,7 @@ class ManualCyphers(Cypher):
             LOAD CSV WITH HEADERS FROM '{url}' as rows
             MERGE (dune:Dune:Account {{handle: rows.duneHandle}})
             WITH dune, rows
-            MATCH (entity:Entity:Grantee {{name: rows.name}})
+            MATCH (entity:Entity {{name: rows.name}})
             MERGE (entity)-[r:ACCOUNT]->(dune)
             RETURN COUNT(dune)
             """
@@ -128,13 +112,8 @@ class ManualCyphers(Cypher):
             query = f"""
             LOAD CSV WITH HEADERS FROM '{url}' as rows
             MERGE (wallet:Account:Wallet {{address: tolower(rows.fundingWalletAddress)}})
-            ON CREATE SET
-                wallet.createdDt = '{self.asOf}',
-                wallet.lastUpdateDt = '{self.asOf}'
-            ON MATCH SET
-                wallet.lastUpdateDt = '{self.asOf}' 
             WITH wallet, rows
-            MATCH (entity:Entity:Grantee {{name: rows.name}})
+            MATCH (entity:Entity {{name: rows.name}})
             MERGE (entity)-[r:ACCOUNT]->(wallet)
             RETURN COUNT(wallet)
             """
@@ -148,14 +127,8 @@ class ManualCyphers(Cypher):
             query = f"""
             LOAD CSV WITH HEADERS FROM '{url}' as rows
             MERGE (website:Account:Website {{name: rows.websiteUrl}})
-            ON CREATE SET
-                website.createdDt = '{self.asOf}',
-                website.lastUpdateDt = '{self.asOf}'
-            ON MATCH SET
-                website.createdDt = '{self.asOf}',
-                website.lastUpdateDt = '{self.asOf}'
             WITH website, rows
-            MATCH (entity:Entity:Grantee {{name: rows.name}})
+            MATCH (entity:Entity {{name: rows.name}})
             MERGE (entity)-[r:ACCOUNT]->(website)
             RETURN COUNT(website)
             """
@@ -170,15 +143,8 @@ class ManualCyphers(Cypher):
             LOAD CSV WITH HEADERS FROM '{url}' as rows
             MERGE (twitter:Account:Twitter {{url: rows.twitterHandle}})
             WITH twitter, rows 
-            MATCH (entity:Entity:Grantee {{name: rows.name}})
+            MATCH (entity:Entity {{name: rows.name}})
             MERGE (entity)-[r:ACCOUNT]->(twitter)
-            ON CREATE SET
-                r.createdDt = '{self.asOf}',
-                r.updatedDt = '{self.asOf}',
-                r.source = rows.source
-            ON MATCH SET
-                r.updatedDt = '{self.asOf}',
-                r.source = rows.source
             RETURN COUNT(twitter)
             """
             count += self.query(query)[0].value()
@@ -191,13 +157,8 @@ class ManualCyphers(Cypher):
             LOAD CSV WITH HEADERS FROM '{url}' as rows
             MERGE (github:Account:Github {{url: rows.githubHandle}})
             WITH github, rows
-            MATCH (entity:Entity:Grantee {{name: rows.name}})
+            MATCH (entity:Entity {{name: rows.name}})
             MERGE (entity)-[r:ACCOUNT]->(github)
-            ON CREATE SET
-                r.createdDt = '{self.asOf}', 
-                r.updatedDt = '{self.asOf}'
-            ON MATCH SET
-                r.updatedDt = '{self.asOf}' 
             RETURN COUNT(github)
             """
             count += self.query(query)[0].value()
@@ -209,19 +170,12 @@ class ManualCyphers(Cypher):
         for url in urls:
             query = f"""
             LOAD CSV WITH HEADERS FROM '{url}' as rows
-            WITH rows WHERE rows.grantInitiative IS NOT NULL
-            MERGE (grant:GrantInitiative:Grant {{name: rows.grantInitiative}})
-            ON CREATE SET 
-                grant.grantPlatform = rows.grantPlatform,
-                grant.tokenAddress = rows.tokenAddress,
-                grant.fundingAuthorizationVote = rows.fundingAuthorizationVote,
-                grant.createdDt = '{self.asOf}',
-                grant.updatedDt = '{self.asOf}'
-            ON MATCH SET
-                grant.updatedDt = '{self.asOf}'
+            WITH rows WHERE rows.grantInitiative is not Null
+            MERGE (grant:Grants:GrantInitiative {{name: rows.grantInitiative}})
+            SET grant.token = rows.grantToken
+            SET grant.platform = rows.grantPlatform
             RETURN COUNT(grant)
             """
-            print(query)
             count += self.query(query)[0].value()
         return count
 
@@ -231,20 +185,14 @@ class ManualCyphers(Cypher):
         for url in urls:
             query = f"""
             LOAD CSV WITH HEADERS FROM '{url}' as rows
-            MATCH (grant:GrantInitiative:Grant {{name: rows.grantInitiative}})
-            MATCH (grantee:Entity:Grantee {{name: rows.name}})
+            MATCH (grant:GrantInitiative {{name: rows.grantInitiative}})
+            MATCH (grantee:Entity {{name: rows.name}})
             WITH grantee, grant, rows
-            MERGE (grantee)<-[r:GRANTEE]-(grant)
-            ON CREATE SET
-                r.amount = rows.amount,
-                r.percVoteWon = rows.percVoteWon,
-                r.grantSubmissionUrl = rows.grantSubmissionUrl,
-                r.grantApprovalSource = rows.grantApprovalSource,
-                r.source = rows.grantApprovalSource,
-                r.createdDt = '{self.asOf}',
-                r.updatedDt = '{self.asOf}'
-            ON MATCH SET
-                r.updatedDt = '{self.asOf}'
+            CREATE (grantee)<-[r:GRANTEE]-(grant)
+            SET r.amount = rows.amount
+            SET r.percVoteWon = rows.percVoteWon
+            SET r.grantSubmissionUrl = rows.grantSubmissionUrl
+            SET r.grantApprovalUrl = rows.grantApprovalSource
             RETURN COUNT(r)
             """
             print(query)
@@ -255,12 +203,12 @@ class ManualCyphers(Cypher):
     def create_orgs(self):
         count = 0
         daos = ['Arbitrum Foundation', 'Uniswap', 'Allo Protocol', 'Gitcoin']
-        companies = ['Questbook', 'Tally', 'Buidlbox']
+        entities = ['Questbook', 'Tally', 'Buidlbox', 'Giveth', 'Glo Dollar']
         for i in daos:
             query = f"MERGE (dao:Entity:Dao {{name: '{i}'}}) RETURN count(*)"
             count += self.query(query)[0].value()
-        for i in companies:
-            query = f"MERGE (company:Entity:Company {{name: '{i}'}}) RETURN count(*)"
+        for i in entities:
+            query = f"MERGE (company:Entity {{name: '{i}'}}) RETURN count(*)"
             count += self.query(query)[0].value()
         return count
 
@@ -269,41 +217,31 @@ class ManualCyphers(Cypher):
         count = 0
         query = f"""
         MATCH (entity:Entity)
-        MATCH (grant:GrantInitiative)
+        MATCH (grant:Grants:GrantInitiative)
         WHERE toLower(grant.name) CONTAINS toLower(entity.name)
         MERGE (entity)-[r:FUNDED]->(grant)
-        ON CREATE SET
-            r.source = grant.grantApprovalSource,
-            r.createdDt = '{self.asOf}',
-            r.updatedDt = '{self.asOf}'
-        ON MATCH SET
-            r.updatedDt = '{self.asOf}' 
         RETURN COUNT(*)
         """
         count += self.query(query)[0].value()
         return count
 
-    # @count_query_logging
-    # def connect_grants_platforms(self):
-    #     count = 0
-    #     platforms = ['Gitcoin', 'Buidlbox', 'Questbook', 'Allo']
-    #     for platform in platforms:
-    #         connect_query = f"""
-    #         MATCH (entity:Entity {{name: '{platform}'}})
-    #         MATCH (grant:GrantsInitiative)
-    #         WHERE toLower(grant.grantsPlatform) CONTAINS toLower(entity.name)
-    #         WITH entity, grant
-    #         MERGE (grant)-[r:GRANTS_PLATFORM]->(entity)
-    #         RETURN COUNT(entity)
-    #         """
-    #         count += self.query(connect_query)[0].value()
-    #     return count
+    @count_query_logging
+    def connect_grants_platforms(self):
+        count = 0
+        query = """
+        MATCH (entity:Entity)
+        MATCH (entityOther:Entity)
+        WHERE entity.grantPlatform = entityOther.name 
+        MERGE (entity)-[r:USED_PLATFORM]->(entityOther)
+        RETURN COUNT(r)
+        """
+        count += self.query(query)[0].value()
 
     @count_query_logging
     def connect_funding_wallet_grant(self):
         count = 0
         query = f"""
-        MATCH (grant:GrantInitiative)-[r1]-(grantee:Entity)-[r2:ACCOUNT]->(wallet:Wallet)
+        MATCH (grant:Grants:GrantInitiative)-[r1]-(grantee:Entity)-[r2:ACCOUNT]->(wallet:Wallet)
         MERGE (grant)-[r3:FUNDED]->(wallet)
         ON CREATE SET r3.source = r1.grantSubmissionUrl
         RETURN COUNT(DISTINCT(wallet))"""
@@ -316,7 +254,7 @@ class ManualCyphers(Cypher):
         query = """
         MATCH (entity:Entity)-[r:GRANTEE]-(grant:GrantInitiative)
         MATCH (prop:Proposal)
-        WHERE r.grantApprovalSource contains prop.url   
+        WHERE r.grantApprovalUrl contains prop.url   
         MERGE (prop)-[r1:FUNDED]->(entity)
         MERGE (prop)-[r2:IMPLEMENTED]->(grant)
         RETURN COUNT(DISTINCT(prop))
@@ -324,16 +262,3 @@ class ManualCyphers(Cypher):
         count += self.query(query)[0].value()
         return count
 
-    # @count_query_logging
-    # def connect_submission_grants(self):
-    #     count = 0
-    #     query = """
-    #     MATCH (grant:GrantInitiative)-[r:GRANTEE]-(entity:Entity)
-    #     MATCH (post:Post)
-    #     WHERE post.url CONTAINS last(split(toString(r.grantSubmissionUrl), '/'))   
-    #     MERGE (entity)-[:SUBMITTED]->(post)
-    #     MERGE (post)-[:SUBMISSION]->(grant)
-    #     RETURN COUNT(post)
-    #     """
-    #     count += self.query(query)[0].value()
-    #     return count

@@ -8,14 +8,14 @@ import datetime
 
 class ManualIngestor(Ingestor):
     def __init__(self):        
-        self.cyphers = ManualCyphers()
+        self.cyphers = ManualCyphers() 
         super().__init__(bucket_name="arbitrum-manual-ingest", load_data=False)
         self.filepath = "pipelines/ingestion/manual-research-initial/data"
-        self.grantees_direct_df = pd.read_csv(f'{self.filepath}/data_grantees_direct_manual_20240307.csv')    
-        self.grantees_ecosystem_df = pd.read_csv(f'{self.filepath}/data_grantee_ecosystem_manual_20240307.csv')
+        self.grantees_direct_df = pd.read_csv(f'{self.filepath}/grantees_formal_20240321.csv')    
+        self.grantees_ecosystem_df = pd.read_csv(f'{self.filepath}/grantees_ecosystem_20240321.csv')
         self.grantees_direct_urls = self.save_df_as_csv(self.grantees_direct_df, f"data_grantees_direct_{self.asOf}.csv")
         self.grantees_ecosystem_urls = self.save_df_as_csv(self.grantees_ecosystem_df, f"data_grantees_ecosystem_{self.asOf}.csv")
-        self.grants_df = pd.read_csv(f"{self.filepath}/data_grants_direct_manual_20240307.csv")
+        self.grants_df = pd.read_csv(f"{self.filepath}/grants_20240321.csv")
 
     def process_grantees(self):
         self.cyphers.create_grantees_direct(self.grantees_direct_urls)
@@ -77,7 +77,7 @@ class ManualIngestor(Ingestor):
         self.cyphers.create_orgs()
 
     def process_grants(self):
-        grants_initiatives_df = self.grants_df[['name','grantInitiative', 'grantsPlatform', 'grantTokenAddress']]
+        grants_initiatives_df = self.grants_df[['name','grantInitiative', 'grantSubmissionUrl', 'percVoteWon', 'grantsPlatform', 'grantToken']]
         grants_initiatives_df =  grants_initiatives_df[grants_initiatives_df['grantInitiative'].notna() & 
                                        grants_initiatives_df['grantInitiative'].ne('')]
         grants_urls = self.save_df_as_csv(grants_initiatives_df, f'data_grants_{self.asOf}.csv')
@@ -90,7 +90,7 @@ class ManualIngestor(Ingestor):
         exploded_funders_df = exploded_funders_df[exploded_funders_df['funder'].notna() & (exploded_funders_df['funder'] != '')]
         deduped_funders_df = exploded_funders_df.drop_duplicates()
         deduped_funders_df_urls = self.save_df_as_csv(deduped_funders_df, f"data_funders_grants_{self.asOf}.csv")
-        self.cyphers.connect_funders_grants(deduped_funders_df_urls)
+        self.cyphers.connect_funders_grants()
 
     def process_grants_platforms(self):
         self.cyphers.connect_grants_platforms()
@@ -101,23 +101,21 @@ class ManualIngestor(Ingestor):
     def process_grants_snapshot(self):
         self.cyphers.connect_approvals_snapshot()
 
-    def process_submission_grants(self):
-        self.cyphers.connect_submission_grants()
 
 
     def run(self):
-        self.process_grantees()
-        self.process_wallets()
-        self.process_twitter()
-        self.process_github()
-        self.process_orgs()
-        self.process_dune()
-        self.process_websites()
+        # self.process_grantees()
+        # self.process_wallets()
+        # self.process_twitter()
+        # self.process_github()
+        # self.process_orgs()
+        # self.process_dune()
+        # self.process_websites()
         self.process_grants()
-        self.process_funders()
-        self.process_grants_platforms()
-        self.process_funding_wallets()
-        self.process_grants_snapshot()
+        # self.process_funders()
+        # self.process_grants_platforms()
+        # self.process_funding_wallets()
+        # self.process_grants_snapshot()
         # self.process_submission_grants()
 
 

@@ -232,3 +232,19 @@ class TallyCyphers(Cypher):
             print(query_next_next)
             count += self.query(query_next_next)[0].value()
         return count 
+    
+    @count_query_logging
+    def connect_delegators_delegates(self, urls):
+        count = 0 
+        for url in urls:
+            query = f"""
+            LOAD CSV WITH HEADERS FROM '{url}' as rows
+            MERGE (delegator:Wallet {{address: rows.delegator}})
+            WITH delegator, rows
+            MATCH (delegate:Wallet {{address: rows.delegate}})
+            MERGE (delegator)-[r:DELEGATES]->(delegate)
+            RETURN COUNT(r)
+            """
+            print(query)
+            count += self.query(query)[0].value()
+        return count
