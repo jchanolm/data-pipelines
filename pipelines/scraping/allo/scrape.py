@@ -76,6 +76,9 @@ class AlloScraper(Scraper):
                 roundFeeAddress
                 roundFeePercentage
                 token
+                projects {
+                    project
+                }
                 votingStrategy
                 payoutStrategy {
                     id
@@ -89,6 +92,8 @@ class AlloScraper(Scraper):
         results = self.send_allo_api_request(query)
         self.data['rounds'] = results 
 
+
+## i have **nooooo** idea what a program is
     def get_programs(self):
         query = """
             {

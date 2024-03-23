@@ -201,25 +201,31 @@ class GithubProcessor(Processor):
             "per_page":100,
             "page":page
         }
-        response = self.get_request(url, params=params, headers=self.get_headers(), decode=False, json=False, ignore_retries=True)
-        if response and not self.check_api_rate_limit(response):
-            return self.get_subscribers(repository, subscribers_data=subscribers_data, page=page)
-        if not response:
-            return subscribers_data
         try:
-            subscribers_raw_data = response.json()
-        except:
-            logging.error(f"Error getting subscribers: {response}")
-            return self.get_subscribers(repository, subscribers_data=subscribers_data, page=page, counter=counter+1)
-        if subscribers_raw_data and type(subscribers_raw_data) == list and len(subscribers_raw_data) > 0:
-            sub_pbar = tqdm(subscribers_raw_data, desc="Getting subscribers information", position=2, leave=False)
-            for subscriber in sub_pbar:
-                if "login" in subscriber:
-                    sub_pbar.set_description(desc="Getting subscribers information: " + subscriber["login"])
-                    self.get_user_data(subscriber["login"], follow_through=False)
-                    subscribers_data.append(subscriber["login"])
-            return self.get_subscribers(repository, subscribers_data=subscribers_data, page=page+1)
-        return subscribers_data
+            response = self.get_request(url, params=params, headers=self.get_headers(), decode=False, json=False, ignore_retries=True)
+
+    # Check if response is meant to be JSON (assuming json parameter affects how
+            if response and not self.check_api_rate_limit(response):
+                return self.get_subscribers(repository, subscribers_data=subscribers_data, page=page)
+            if not response:
+                return subscribers_data
+            try:
+                subscribers_raw_data = response.json()
+            except:
+                logging.error(f"Error getting subscribers: {response}")
+                return self.get_subscribers(repository, subscribers_data=subscribers_data, page=page, counter=counter+1)
+            if subscribers_raw_data and type(subscribers_raw_data) == list and len(subscribers_raw_data) > 0:
+                sub_pbar = tqdm(subscribers_raw_data, desc="Getting subscribers information", position=2, leave=False)
+                for subscriber in sub_pbar:
+                    if "login" in subscriber:
+                        sub_pbar.set_description(desc="Getting subscribers information: " + subscriber["login"])
+                        self.get_user_data(subscriber["login"], follow_through=False)
+                        subscribers_data.append(subscriber["login"])
+                return self.get_subscribers(repository, subscribers_data=subscribers_data, page=page+1)
+            return subscribers_data
+        except Exception as e:
+            logging.error(f"Error retrieving subscribers :( {e}")
+            pass
 
     def get_repo_readme(self, repository):
         url = f"https://api.github.com/repos/{repository}/readme"
