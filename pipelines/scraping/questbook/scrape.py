@@ -23,10 +23,12 @@ class QuestbookScraper(Scraper):
         options.set_preference("general.useragent.override", "Firefox: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0")
         self.driver = webdriver.Firefox(options=options)
 
-    def get_initiative_links(self):
-
+    def get_grant_initiatives(self):
         driver = self.driver 
         driver.get('https://new.questbook.app/')
+        titles = [i.text for i in driver.find_elements(By.CSS_SELECTOR, 'p.chakra-text.css-ksuksa')]
+        protocols = [i.text for i in driver.find_elements]
+
         time.sleep(10)
     
 

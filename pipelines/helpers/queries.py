@@ -24,6 +24,8 @@ class Queries(Cypher):
         for url in tqdm(urls):
             query = f"""
                     LOAD CSV WITH HEADERS FROM '{url}' AS wallets
+                    WITH wallets
+                    WHERE wallets.address IT NOT NULL
                     MERGE(wallet:Wallet:Account {{address: toLower(wallets.address)}})
                     ON CREATE set wallet.uuid = apoc.create.uuid(),
                         wallet.createdDt = datetime(apoc.date.toISO8601(apoc.date.currentTimestamp(), 'ms')),
@@ -54,7 +56,6 @@ class Queries(Cypher):
                         t.ingestedBy = "{self.UPDATED_ID}"
                     return count(t)    
             """
-            print(query)
             count += self.query(query)[0].value()
         return count
 
@@ -82,6 +83,8 @@ class Queries(Cypher):
         for url in tqdm(urls):
             query = f"""
                     LOAD CSV WITH HEADERS FROM '{url}' AS alias
+                    WITH alias
+                    WHERE alias.handle IS NOT NULL
                     MERGE (a:Alias:Ens {{name: toLower(alias.name)}})
                     ON CREATE set a.uuid = apoc.create.uuid(),
                         a.createdDt = datetime(apoc.date.toISO8601(apoc.date.currentTimestamp(), 'ms')),
@@ -98,6 +101,8 @@ class Queries(Cypher):
         for url in tqdm(urls):
             query = f"""
                     LOAD CSV WITH HEADERS FROM '{url}' AS ens
+                    WITH ens
+                    WHERE ens.tokenId is not null                  
                     MERGE (e:Ens:Nft {{editionId: ens.tokenId}})
                     ON CREATE set e.uuid = apoc.create.uuid(),
                         e.createdDt = datetime(apoc.date.toISO8601(apoc.date.currentTimestamp(), 'ms')),
@@ -230,7 +235,6 @@ class Queries(Cypher):
                     link.ingestedBy = "{self.UPDATED_ID}"
                 RETURN count(link)
             """
-            print(query)
             count += self.query(query)[0].value()
         return count
 

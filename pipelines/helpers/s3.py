@@ -39,8 +39,7 @@ class S3Utils:
 
         self.start_date = None
         self.end_date = None
-        self.set_start_end_date()
-        
+        self.start_date = None        
         if load_bucket_data:
             self.scraper_data = {}
             self.load_data()
@@ -61,7 +60,7 @@ class S3Utils:
             self.end_date = os.environ["INGEST_TO_DATE"]
         # Converting to python datetime object for easy filtering
         if self.start_date:
-            self.start_date = datetime.strptime(self.start_date, "%Y-%m-%d-%J-%M")
+            self.start_date = datetime.strptime(self.start_date, "%Y-%m-%d-%H-%M")
         if self.end_date:
             self.end_date = datetime.strptime(self.end_date, "%Y-%m-%d-%H-%M")
 
