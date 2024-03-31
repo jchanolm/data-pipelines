@@ -2,13 +2,9 @@ from ..helpers import Scraper
 import logging 
 import time
 import os 
+import json
 import requests as requests
 
-## add call to look up topics?
-###, title
-
-## category
-###
 
 class DiscourseScraper(Scraper):
     def __init__(self, bucket_name="arbitrum-discourse", load_data=False):
@@ -44,18 +40,85 @@ class DiscourseScraper(Scraper):
             page += 1
         return topics 
     
-    def fetch_topic_posts(self, topic_id):
-        url = f"{self.base_url}/t/{topic_id}.json"
-        response = requests.get(url)
-        time.sleep(.05) ## semi-respectful pause between requests
-        if response.status_code != 200:
-            return None 
-        return response.json()
+    
+    def get_last_post_number(self, posts_data):
+        last_post_number = max([post.get('post_number', 0) for post in posts_data])
+        return last_post_number
+    
+    def fetch_latest_posts(self):
+        posts = []
+        last_post_id = 10000  # Initialize with None to start fetching from the latest
+        attempt = 0
+        max_attempts = 5  # Maximum number of retry attempts
+        delay = 10  # Initial delay in seconds before retrying in case of rate limit or error
+        post_count = 0  # Initialize post count
+
+        while attempt < max_attempts:
+            try:
+                url = f"{self.base_url}/posts.json"
+                if last_post_id:
+                    url += f"?before={last_post_id}"
+
+                response = requests.get(url)
+                time.sleep(1)  # Short pause to be polite to the server
+                logging.info(f"Attempt {attempt + 1} to fetch posts...")
+
+                if response.status_code == 200:
+                    latest_posts = response.json().get('latest_posts', [])
+                    if not latest_posts:
+                        logging.info("No more posts to fetch.")
+                        break  # Exit the loop if no more posts are returned
+
+                    posts.extend(latest_posts)
+                    post_count += len(latest_posts)
+                    logging.info(f"Captured {len(posts)} posts...")
+                    last_post_id = latest_posts[-1].get('id')  # Update last_post_id for pagination
+                    attempt = 0  # Reset attempt counter after a successful fetch
+
+                    # Save posts in batches of 5000
+                    if post_count >= 5000:
+                        file_name = f"{post_count}.json"
+                        with open(file_name, 'w') as file:
+                            json.dump(posts, file)
+                        logging.info(f"Saved {len(posts)} posts to {file_name}")
+                        posts = []  # Reset posts list after saving
+                        post_count = 0  # Reset post count after saving
+
+                elif response.status_code == 429:
+                    logging.info("Rate limit encountered. Waiting before retrying...")
+                    time.sleep(delay)
+                    delay *= 2  # Exponential back-off for retry delay
+                    attempt += 1
+                else:
+                    logging.error(f"Error fetching posts: Status {response.status_code}. Will try again...")
+                    attempt += 1
+
+            except Exception as e:
+                logging.error(f"An exception occurred: {str(e)}. Attempting to retry...")
+                attempt += 1
+                time.sleep(delay)
+                delay *= 2  # Exponential back-off for retry delay
+
+            if attempt >= max_attempts:
+                logging.error("Maximum attempts reached. Some posts may not have been fetched.")
+                if posts:  # Check if there are any posts left to save
+                    file_name = f"{post_count}.json"
+                    with open(file_name, 'w') as file:
+                        json.dump(posts, file)
+                    logging.info(f"Saved the remaining {len(posts)} posts to {file_name}")
+                break
+
+        return posts
 
     def process_post_data(self, topic_posts, category_name):
-            posts_data = []
-            posts = topic_posts.get("post_stream", {}).get("posts", [])
-            for post in posts:
+        posts_data = []
+        if not isinstance(topic_posts, dict):
+            logging.error("Expected topic_posts to be a dict, but got a list. Check the data source or calling function.")
+            return posts_data  # Return an empty list or handle as needed
+
+        # Continue with your logic assuming topic_posts is a dict
+        if 'post_stream' in topic_posts and 'posts' in topic_posts['post_stream']:
+            for post in topic_posts['post_stream']['posts']:
                 id = post.get('id', '')
                 topicId = topic_posts.get('id')
                 postNumber = post.get('post_number', '')
@@ -65,7 +128,6 @@ class DiscourseScraper(Scraper):
                 for action in actions_summary:
                     if action.get('id') == 2:  # Assuming '2' identifies a 'like' action
                         likes = action.get('count', 0)
-                        # likes = next((action['count'] for action in actions_summary if action.get('id') == 2), 0)
                 postData = {
                     "postUuid": postUuid,
                     "postId": post.get("id"),
@@ -78,7 +140,6 @@ class DiscourseScraper(Scraper):
                     "quoteCount": post.get("quote_count"),
                     "likes": likes, 
                     "readersCount": post.get("readers_count"),
-                    "quoteCount": post.get("quote_count"),
                     "readsCount": post.get("reads"),
                     "replyToPostNumber": post.get("reply_to_post_number"),
                     "title": topic_posts.get("title", ""),
@@ -89,37 +150,17 @@ class DiscourseScraper(Scraper):
                     "url": f"{self.base_url}/t/{topic_posts.get('id')}/{post.get('post_number')}"
                 }
                 posts_data.append(postData)
-            return posts_data
+                self.data['posts'] = posts_data 
 
-    def fetch_posts(self):
-        print("Fetching categories....")
-        categories = self.fetch_categories()
-        all_posts_data = []
-        for category in categories:
-            category_slug = category.get('slug')
-            category_name = category.get('name')
-            print(f"Fetching posts for {category_name}.....")
-            topics = self.fetch_topics(category_slug)
-            for topic in topics:
-                topic_id = topic.get('id')
-                topic_details = self.fetch_topic_posts(topic_id)
-                if topic_details:
-                    posts_data = self.process_post_data(topic_details, category_name)
-                    all_posts_data.extend(posts_data)
-                    print(f"Scraped {len(all_posts_data)} records....")
-        return all_posts_data
-    
-    
-    def get_last_post_number(self, posts_data):
-        last_post_number = max([post.get('post_number', 0) for post in posts_data])
-        return last_post_number
+
+        return posts_data
 
 
     def run(self):
         print(f"Fetching all posts from {self.base_url}...")
-        posts = self.fetch_posts()
+        posts = self.fetch_latest_posts()
         self.data['posts'] = posts
-        self.metadata['last_post_number'] = self.get_last_post_number(posts)
+        print(self.data['posts'].keys())
 
         self.save_data()
         self.save_metadata()
