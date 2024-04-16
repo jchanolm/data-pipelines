@@ -3,18 +3,7 @@ from datetime import datetime
 import logging
 import os
 from ...helpers import Base
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
-options = Options()
-options.set_preference("general.useragent.override", "Firefox: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0")
 
-# This class is the base class for all scrapers.
-# Every scraper must inherit this class and define its own run function
-# The base class takes care of loading the metadata and checking that data was not already ingested for today
-# The data and metadata are not saved automatically at the end of the execution to allow for user defined save points.
-# Use the save_metadata and save_data functions to automatically save to S3
-# During the run function, save the data into the instance.data field.
-# The data field is a dictionary, define each root key as you would a mongoDB index.
 
 class Scraper(Base):
     def __init__(self, bucket_name, load_data=False, chain="ethereum"):
