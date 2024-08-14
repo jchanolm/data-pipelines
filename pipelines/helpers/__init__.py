@@ -6,9 +6,9 @@ from .requests import Requests
 from .queries import Queries
 from .multiprocessing import Multiprocessing
 from .utils import Utils
-from .etherscan import Etherscan
+# from .etherscan import Etherscan
 from .alchemy import Alchemy
-from .web3Utils import Web3Utils
+# from .web3Utils import Web3Utils
 from .base import Base
 from .twitter import Twitter
 from .decorators import *

@@ -208,10 +208,20 @@ class GcExplorerScraper(Scraper):
         self.data['data'] = completed_dicts
 
 
+    def get_uni_tokens(self):
+        driver = self.driver
+        driver.get('https://app.uniswap.org/explore/tokens/base?chain=base')
+        time.sleep(10)
+        source_html = driver.page_source 
+        with open("uni_html.html", "w") as f:
+            f.write(source_html)
+
+
     def run(self):
-        self.scrape_git_explorer()
-        self.save_metadata()
-        self.save_data()
+        # self.scrape_git_explorer()
+        self.get_uni_tokens()
+        # self.save_metadata()
+        # self.save_data()
 
 
 
