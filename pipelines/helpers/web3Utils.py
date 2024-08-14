@@ -5,7 +5,8 @@ import re
 import time
 import warnings
 import requests
-from ens import ENS
+import ens 
+# from ens import ENS
 from web3 import Web3
 from web3.logs import DISCARD
 import eth_utils
@@ -20,7 +21,7 @@ class Web3Utils:
         }
         self.max_retries = max_retries
         self.w3 = Web3(Web3.HTTPProvider(self.alchemy_urls[chain]))
-        self.ns = ENS.from_web3(self.w3)
+        self.ns = ens.ENS.from_web3(self.w3)
         self.text_records = ["avatar", "description", "display", "email", "keywords", "mail", "notice", "location", "phone", "url", "com.github", "com.peepeth", "com.linkedin", "com.twitter", "io.keybase", "org.telegram"]
         if self.w3.is_connected():
             logging.info(f"Web3 is connected!")
